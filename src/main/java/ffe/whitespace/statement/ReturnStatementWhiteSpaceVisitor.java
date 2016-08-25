@@ -4,6 +4,7 @@ import ffe.Token;
 import ffe.whitespace.Direction;
 import ffe.whitespace.FeatureCollector;
 import ffe.whitespace.WhiteSpaceVisitor;
+import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
@@ -17,8 +18,8 @@ public class ReturnStatementWhiteSpaceVisitor extends WhiteSpaceVisitor {
 
     @Override
     public boolean visit(ReturnStatement node) {
-        if (source[node.getExpression().getStartPosition()] == '(') {
-            Token leftParen = searchForward(TokenNameLPAREN, node.getExpression().getStartPosition());
+        if (node.getExpression() instanceof ParenthesizedExpression) {
+            Token leftParen = searchForward(TokenNameLPAREN, node.getStartPosition());
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_RETURN, leftParen, Direction.BEFORE);
         }
         return super.visit(node);

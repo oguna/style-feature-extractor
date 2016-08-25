@@ -18,8 +18,9 @@ public class TypeCastWhiteSpaceVisitor extends WhiteSpaceVisitor {
 
     @Override
     public boolean visit(CastExpression node) {
+        // ( Type ) Expression
         Token leftParen = searchForward(TokenNameLPAREN, node.getStartPosition());
-        Token rightParen = searchForward(TokenNameRPAREN, node.getStartPosition());
+        Token rightParen = searchBackward(TokenNameRPAREN, node.getType().getStartPosition() + node.getType().getLength());
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_CAST, leftParen, Direction.AFTER);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_CAST, rightParen, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_PAREN_IN_CAST, rightParen, Direction.AFTER);

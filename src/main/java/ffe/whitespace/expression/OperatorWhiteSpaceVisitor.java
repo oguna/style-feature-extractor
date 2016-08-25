@@ -4,6 +4,7 @@ import ffe.Token;
 import ffe.whitespace.Direction;
 import ffe.whitespace.FeatureCollector;
 import ffe.whitespace.WhiteSpaceVisitor;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
@@ -20,7 +21,12 @@ public class OperatorWhiteSpaceVisitor extends WhiteSpaceVisitor {
         Token token = searchForward(node.getOperator().toString(), node.getLeftOperand().getStartPosition() + node.getLeftOperand().getLength());
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_BINARY_OPERATOR, token, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_BINARY_OPERATOR, token, Direction.AFTER);
-        // TODO
+        for (Object i : node.extendedOperands()) {
+            Expression expression = (Expression) i;
+            Token extendedToken = searchBackward(node.getOperator().toString(), expression.getStartPosition());
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_BINARY_OPERATOR, extendedToken, Direction.BEFORE);
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_BINARY_OPERATOR, extendedToken, Direction.AFTER);
+        }
         return super.visit(node);
     }
 

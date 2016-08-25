@@ -4,10 +4,7 @@ import ffe.Token;
 import ffe.whitespace.Direction;
 import ffe.whitespace.FeatureCollector;
 import ffe.whitespace.WhiteSpaceVisitor;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
@@ -44,13 +41,12 @@ public class FunctionInvocationWhiteSpaceVisitor extends WhiteSpaceVisitor {
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_INVOCATION, leftParen, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_METHOD_INVOCATION, leftParen, Direction.AFTER);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_INVOCATION, rightParen, Direction.BEFORE);
-
         if (node.arguments().size() > 1) {
             for (int i = 0; i < node.arguments().size() - 1; i++) {
                 Expression argument = (Expression)node.arguments().get(i);
                 Token comma = searchForward(TokenNameCOMMA, argument.getStartPosition() + argument.getLength());
-                //collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN, comma, Direction.BEFORE);
-                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_INVOCATION_ARGUMENTS, comma, Direction.AFTER);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ALLOCATION_EXPRESSION, comma, Direction.BEFORE);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ALLOCATION_EXPRESSION, comma, Direction.AFTER);
             }
         } else if (node.arguments().size() == 0) {
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_METHOD_INVOCATION, leftParen, rightParen);
@@ -69,8 +65,28 @@ public class FunctionInvocationWhiteSpaceVisitor extends WhiteSpaceVisitor {
             for (int i = 0; i < node.arguments().size() - 1; i++) {
                 Expression argument = (Expression)node.arguments().get(i);
                 Token comma = searchForward(TokenNameCOMMA, argument.getStartPosition() + argument.getLength());
-                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_SUPERINTERFACES, comma, Direction.BEFORE);
-                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_SUPERINTERFACES, comma, Direction.AFTER);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS, comma, Direction.BEFORE);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS, comma, Direction.AFTER);
+            }
+        } else if (node.arguments().size() == 0) {
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_METHOD_INVOCATION, leftParen, rightParen);
+        }
+        return super.visit(node);
+    }
+
+    @Override
+    public boolean visit(ConstructorInvocation node) {
+        Token leftParen = searchForward(TokenNameLPAREN, node.getStartPosition());
+        Token rightParen = searchBackward(TokenNameRPAREN, node.getStartPosition() + node.getLength());
+        collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_INVOCATION, leftParen, Direction.BEFORE);
+        collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_METHOD_INVOCATION, leftParen, Direction.AFTER);
+        collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_INVOCATION, rightParen, Direction.BEFORE);
+        if (node.arguments().size() > 1) {
+            for (int i = 0; i < node.arguments().size() - 1; i++) {
+                Expression argument = (Expression)node.arguments().get(i);
+                Token comma = searchForward(TokenNameCOMMA, argument.getStartPosition() + argument.getLength());
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS, comma, Direction.BEFORE);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS, comma, Direction.AFTER);
             }
         } else if (node.arguments().size() == 0) {
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_METHOD_INVOCATION, leftParen, rightParen);

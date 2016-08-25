@@ -20,7 +20,7 @@ public class ParenthesizedExpressionWhiteSpaceVisitor extends WhiteSpaceVisitor 
         Token leftParen = searchForward(TokenNameLPAREN, node.getStartPosition());
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_PARENTHESIZED_EXPRESSION, leftParen, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_PARENTHESIZED_EXPRESSION, leftParen, Direction.BEFORE);
-        Token rightParen = searchForward(TokenNameRPAREN, node.getStartPosition() + node.getLength());
+        Token rightParen = searchBackward(TokenNameRPAREN, node.getStartPosition() + node.getLength());
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_PARENTHESIZED_EXPRESSION, rightParen, Direction.BEFORE);
         return super.visit(node);
     }

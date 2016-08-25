@@ -88,6 +88,32 @@ public abstract class WhiteSpaceVisitor extends ASTVisitor {
         }
     }
 
+
+    protected Token searchBackward(String targetToken, int offset) {
+        try {
+            int lastMatchTokenPosition = -1;
+            String lastMatchTokenString = null;
+            Scanner scanner = new Scanner();
+            scanner.recordLineSeparator = true;
+            scanner.sourceLevel = ClassFileConstants.JDK1_8;
+            scanner.setSource(source);
+            int tokenType;
+            while ((tokenType = scanner.getNextToken()) != TokenNameEOF && offset >= scanner.getCurrentTokenStartPosition()) {
+                int start = scanner.getCurrentTokenStartPosition();
+                if (Objects.equals(scanner.getCurrentTokenString(), targetToken)) {
+                    lastMatchTokenPosition = scanner.getCurrentTokenStartPosition();
+                    lastMatchTokenString = scanner.getCurrentTokenString();
+                }
+            }
+            if (lastMatchTokenPosition > 0) {
+                return new Token(lastMatchTokenPosition, lastMatchTokenString.length());
+            }
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected Token searchForward(int targetToken, int offset) {
         try {
             Scanner scanner = new Scanner();

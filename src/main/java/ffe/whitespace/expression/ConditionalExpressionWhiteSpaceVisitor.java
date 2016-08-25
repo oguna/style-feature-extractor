@@ -17,6 +17,7 @@ public class ConditionalExpressionWhiteSpaceVisitor extends WhiteSpaceVisitor {
 
     @Override
     public boolean visit(ConditionalExpression node) {
+        // Expression ? Expression : Expression
         Token questionMark = searchForward(TokenNameQUESTION, node.getExpression().getStartPosition() + node.getExpression().getLength());
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_QUESTION_IN_CONDITIONAL, questionMark, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_QUESTION_IN_CONDITIONAL, questionMark, Direction.AFTER);
