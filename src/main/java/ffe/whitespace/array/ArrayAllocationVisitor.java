@@ -18,13 +18,17 @@ public class ArrayAllocationVisitor extends WhiteSpaceVisitor {
     }
 
     public boolean visit(ArrayCreation node) {
-        for (Object i : node.getType().dimensions()) {
-            Dimension expression = (Dimension) i;
-            Token leftBracket = searchForward(TokenNameLBRACKET, expression.getStartPosition());
+        for (int i = 0; i < node.getType().dimensions().size(); i++) {
+            Dimension dimension = (Dimension) node.getType().dimensions().get(i);
+            Token leftBracket = searchForward(TokenNameLBRACKET, dimension.getStartPosition());
+            Token rightBracket = searchBackward(TokenNameRBRACKET, dimension.getStartPosition() + dimension.getLength());
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION, leftBracket, Direction.BEFORE);
-            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION, leftBracket, Direction.AFTER);
-            Token rightBracket = searchBackward(TokenNameRBRACKET, expression.getStartPosition() + expression.getLength());
-            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION, rightBracket, Direction.BEFORE);
+            if (i < node.dimensions().size()) {
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION, leftBracket, Direction.AFTER);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION, rightBracket, Direction.BEFORE);
+            } else {
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_BRACKETS_IN_ARRAY_ALLOCATION_EXPRESSION, leftBracket, rightBracket);
+            }
         }
         return super.visit(node);
     }
