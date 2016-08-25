@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        int[][] a = new int[1][];
         System.out.println("hello world");
         List<Path> targets = Files.walk(Paths.get("src/main/java"))
                 .filter(e -> e.toFile().isFile())

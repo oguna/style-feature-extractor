@@ -22,7 +22,7 @@ public class EnumVisitor extends WhiteSpaceVisitor {
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ENUM_DECLARATION, leftBrace, Direction.BEFORE);
         if (node.enumConstants().size() > 1) {
             for (int i = 0; i < node.enumConstants().size() - 1; i++) {
-                EnumConstantDeclaration ecd = (EnumConstantDeclaration)node.enumConstants().get(i);
+                EnumConstantDeclaration ecd = (EnumConstantDeclaration) node.enumConstants().get(i);
                 Token comma = searchForward(TokenNameCOMMA, ecd.getStartPosition() + ecd.getLength());
                 collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ENUM_DECLARATIONS, comma, Direction.BEFORE);
                 collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ENUM_DECLARATIONS, comma, Direction.AFTER);
@@ -45,8 +45,13 @@ public class EnumVisitor extends WhiteSpaceVisitor {
                 collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ENUM_CONSTANT_ARGUMENTS, comma, Direction.BEFORE);
                 collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ENUM_CONSTANT_ARGUMENTS, comma, Direction.AFTER);
             }
+        } else if (node.arguments().size() == 0) {
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_ENUM_CONSTANT, leftParen, rightParen);
         }
-        // TODO
+        if (node.getAnonymousClassDeclaration() != null) {
+            Token brace = searchForward(TokenNameRBRACE, node.getAnonymousClassDeclaration().getStartPosition());
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ENUM_CONSTANT, brace, Direction.BEFORE);
+        }
         return super.visit(node);
     }
 }
