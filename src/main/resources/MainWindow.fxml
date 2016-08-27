@@ -1,4 +1,4 @@
-<?import ffe.gui.ScrollTextArea?>
+<?import ffe.gui.SourceCodeView?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.BorderPane?>
 <BorderPane fx:id="root" xmlns:fx="http://javafx.com/fxml" fx:controller="ffe.gui.MainWindowController">
@@ -14,7 +14,7 @@
     </top>
     <center>
         <SplitPane>
-            <ScrollTextArea fx:id="textArea"/>
+            <SourceCodeView fx:id="textArea"/>
             <TableView fx:id="tableView">
                 <columns>
                     <TableColumn fx:id="positionColumn" text="Position" sortable="false" editable="false" />

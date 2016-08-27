@@ -1,18 +1,60 @@
 package ffe.gui;
 
+import javafx.concurrent.Task;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.parser.Scanner;
+import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
-public class JavaSyntaxHighlighter {
-    public static StyleSpans<Collection<String>> computeHighlighting(String text) {
+public class SourceCodeView extends VirtualizedScrollPane<CodeArea> {
+    public SourceCodeView() {
+        super(new CodeArea());
+        getContent().setParagraphGraphicFactory(LineNumberFactory.get(getContent()));
+        getContent().setEditable(false);
+        getContent().richChanges()
+                .filter(ch -> !ch.getInserted().equals(ch.getRemoved())) // XXX
+                .successionEnds(Duration.ofMillis(500))
+                .supplyTask(this::computeHighlightingAsync)
+                .awaitLatest(getContent().richChanges())
+                .filterMap(t -> {
+                    if (t.isSuccess()) {
+                        return Optional.of(t.get());
+                    } else {
+                        t.getFailure().printStackTrace();
+                        return Optional.empty();
+                    }
+                })
+                .subscribe(this::applyHighlighting);
+    }
+
+    private Task<StyleSpans<Collection<String>>> computeHighlightingAsync() {
+        String text = getContent().getText();
+        Task<StyleSpans<Collection<String>>> task = new Task<StyleSpans<Collection<String>>>() {
+            @Override
+            protected StyleSpans<Collection<String>> call() throws Exception {
+                return computeHighlighting(text);
+            }
+        };
+        new Thread(task).start();
+        return task;
+    }
+
+    private void applyHighlighting(StyleSpans<Collection<String>> highlighting) {
+        getContent().setStyleSpans(0, highlighting);
+    }
+
+    private static StyleSpans<Collection<String>> computeHighlighting(String text) {
         try {
             Scanner scanner = new Scanner();
             scanner.setSource(text.toCharArray());

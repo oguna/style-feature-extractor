@@ -6,7 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.io.IOException;
 
 public class MainGUI extends Application {
@@ -27,12 +26,5 @@ public class MainGUI extends Application {
         scene.getStylesheets().add(getClass().getResource("/java-keywords.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
-    }
-
-    @Override
-    public void stop() {
-        if (this.controller != null) {
-            controller.stop();
-        }
     }
 }
