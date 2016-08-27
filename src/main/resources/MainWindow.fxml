@@ -1,0 +1,33 @@
+<?import ffe.gui.ScrollTextArea?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.BorderPane?>
+<BorderPane fx:id="root" xmlns:fx="http://javafx.com/fxml" fx:controller="ffe.gui.MainWindowController">
+    <top>
+        <MenuBar>
+            <Menu text="File">
+                <MenuItem text="Open.." onAction="#open" />
+                <MenuItem text="Save.." onAction="#save" />
+                <SeparatorMenuItem />
+                <MenuItem text="Exit" onAction="#exit" />
+            </Menu>
+        </MenuBar>
+    </top>
+    <center>
+        <SplitPane>
+            <ScrollTextArea fx:id="textArea"/>
+            <TableView fx:id="tableView">
+                <columns>
+                    <TableColumn fx:id="positionColumn" text="Position" sortable="false" editable="false" />
+                    <TableColumn fx:id="tokenColumn" text="Token" sortable="false" editable="false" />
+                    <TableColumn fx:id="attributeColumn" text="Attribute" sortable="false" editable="false" />
+                    <TableColumn fx:id="valueColumn" text="Value" sortable="false" editable="false" />
+                </columns>
+                    </TableView>
+        </SplitPane>
+    </center>
+    <bottom>
+        <ToolBar>
+            <Label text="Status Bar" />
+        </ToolBar>
+    </bottom>
+</BorderPane>
