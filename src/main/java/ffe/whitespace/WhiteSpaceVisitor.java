@@ -1,6 +1,9 @@
 package ffe.whitespace;
 
+import ffe.FeatureCollector;
+import ffe.FormatFeatureVisitor;
 import ffe.Token;
+import ffe.TokenSequence;
 import ffe.whitespace.array.ArrayAllocationVisitor;
 import ffe.whitespace.array.ArrayDeclarationVisitor;
 import ffe.whitespace.array.ArrayElementAccessVisitor;
@@ -23,25 +26,22 @@ import java.util.Objects;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameEOF;
 
-public abstract class WhiteSpaceVisitor extends ASTVisitor {
-    protected final char[] source;
-    protected final FeatureCollector featureCollector;
+public abstract class WhiteSpaceVisitor extends FormatFeatureVisitor {
 
-    public WhiteSpaceVisitor(char[] source, FeatureCollector featureCollector) {
-        this.source = source;
-        this.featureCollector = featureCollector;
+    public WhiteSpaceVisitor(@NotNull TokenSequence tokenSequence, @NotNull FeatureCollector featureCollector) {
+        super(tokenSequence, featureCollector);
     }
 
-    protected void collectFeature(String attribute, @NotNull Token token, Direction direction) {
+    protected void collectFeature(@NotNull String attribute, @NotNull Token token, @NotNull Direction direction) {
         final WhiteSpaceFormatFeature feature;
         if (direction == Direction.BEFORE) {
-            if (Character.isWhitespace(source[token.position - 1])) {
+            if (tokenSequence.existWhiteSpaceBeforeToken(token)) {
                 feature = new WhiteSpaceFormatFeature(attribute, WhiteSpaceOption.INSERT, token, direction);
             } else {
                 feature = new WhiteSpaceFormatFeature(attribute, WhiteSpaceOption.DO_NOT_INSERT, token, direction);
             }
         } else if (direction == Direction.AFTER) {
-            if (Character.isWhitespace(source[token.position + token.length])) {
+            if (tokenSequence.existWhiteSpaceAfterToken(token)) {
                 feature = new WhiteSpaceFormatFeature(attribute, WhiteSpaceOption.INSERT, token, direction);
             } else {
                 feature = new WhiteSpaceFormatFeature(attribute, WhiteSpaceOption.DO_NOT_INSERT, token, direction);
@@ -52,9 +52,9 @@ public abstract class WhiteSpaceVisitor extends ASTVisitor {
         featureCollector.collect(feature);
     }
 
-    protected void collectFeature(String attribute, Token left, Token right) {
-        Token token = new Token(left.position, right.position + right.length - left.position);
-        if (Character.isWhitespace(source[left.position + left.length])) {
+    protected void collectFeature(@NotNull String attribute, @NotNull Token left, @NotNull Token right) {
+        Token token = left;
+        if (tokenSequence.existWhiteSpaceAfterToken(token)) {
             WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(attribute, WhiteSpaceOption.INSERT, token, Direction.BETWEEN);
             featureCollector.collect(feature);
         } else {
@@ -63,127 +63,7 @@ public abstract class WhiteSpaceVisitor extends ASTVisitor {
         }
     }
 
-    protected Token searchBackward(int targetToken, int offset) {
-        try {
-            int lastMatchTokenPosition = -1;
-            String lastMatchTokenString = null;
-            Scanner scanner = new Scanner();
-            scanner.recordLineSeparator = true;
-            scanner.sourceLevel = ClassFileConstants.JDK1_8;
-            scanner.setSource(source);
-            int tokenType;
-            while ((tokenType = scanner.getNextToken()) != TokenNameEOF && offset >= scanner.getCurrentTokenStartPosition()) {
-                int start = scanner.getCurrentTokenStartPosition();
-                if (tokenType == targetToken) {
-                    lastMatchTokenPosition = scanner.getCurrentTokenStartPosition();
-                    lastMatchTokenString = scanner.getCurrentTokenString();
-                }
-            }
-            if (lastMatchTokenPosition > 0) {
-                return new Token(lastMatchTokenPosition, lastMatchTokenString.length());
-            }
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    protected Token searchBackward(String targetToken, int offset) {
-        try {
-            int lastMatchTokenPosition = -1;
-            String lastMatchTokenString = null;
-            Scanner scanner = new Scanner();
-            scanner.recordLineSeparator = true;
-            scanner.sourceLevel = ClassFileConstants.JDK1_8;
-            scanner.setSource(source);
-            int tokenType;
-            while ((tokenType = scanner.getNextToken()) != TokenNameEOF && offset >= scanner.getCurrentTokenStartPosition()) {
-                int start = scanner.getCurrentTokenStartPosition();
-                if (Objects.equals(scanner.getCurrentTokenString(), targetToken)) {
-                    lastMatchTokenPosition = scanner.getCurrentTokenStartPosition();
-                    lastMatchTokenString = scanner.getCurrentTokenString();
-                }
-            }
-            if (lastMatchTokenPosition > 0) {
-                return new Token(lastMatchTokenPosition, lastMatchTokenString.length());
-            }
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected Token searchForward(int targetToken, int offset) {
-        try {
-            Scanner scanner = new Scanner();
-            scanner.recordLineSeparator = true;
-            scanner.sourceLevel = ClassFileConstants.JDK1_8;
-            scanner.setSource(source);
-            int tokenType;
-            while ((tokenType = scanner.getNextToken()) != TokenNameEOF) {
-                int start = scanner.getCurrentTokenStartPosition();
-                if (start < offset) {
-                    continue;
-                }
-                if (tokenType == targetToken) {
-                    return new Token(start, scanner.getCurrentTokenString().length());
-                }
-            }
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected Token searchForward(String targetToken, int offset) {
-        try {
-            Scanner scanner = new Scanner();
-            scanner.recordLineSeparator = true;
-            scanner.sourceLevel = ClassFileConstants.JDK1_8;
-            scanner.setSource(source);
-            int tokenType;
-            while ((tokenType = scanner.getNextToken()) != TokenNameEOF) {
-                int start = scanner.getCurrentTokenStartPosition();
-                if (start < offset) {
-                    continue;
-                }
-                if (Objects.equals(targetToken, scanner.getCurrentTokenString())) {
-                    return new Token(start, scanner.getCurrentTokenString().length());
-                }
-            }
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void dumpPositionForDebug(int pos) {
-        int lineStartPos;
-        for (lineStartPos = pos; lineStartPos  >= 0; lineStartPos--) {
-            if (source[lineStartPos] == '\n' || source[lineStartPos] == '\r') {
-                lineStartPos++;
-                break;
-            }
-        }
-        int lineEndPos;
-        for (lineEndPos = pos; lineEndPos  < source.length; lineEndPos++) {
-            if (source[lineEndPos] == '\n' || source[lineEndPos] == '\r') {
-                lineEndPos--;
-                break;
-            }
-        }
-        String line = new String(source, lineStartPos, lineEndPos - lineStartPos + 1);
-        StringBuilder sb = new StringBuilder(pos - lineStartPos);
-        for (int i = 0; i < (pos - lineStartPos); i++) {
-            sb.append(' ');
-        }
-        sb.append('^');
-        System.out.println(line);
-        System.out.println(sb.toString());
-    }
-
-    public static List<WhiteSpaceVisitor> listStatementWhiteSpaceVisitor(char[] source, FeatureCollector collector) {
+    public static List<WhiteSpaceVisitor> listWhiteSpaceVisitor(TokenSequence source, FeatureCollector collector) {
         return Arrays.asList(
                 new AssertStatementWhiteSpaceVisitor(source, collector),
                 new BlockStatementWhiteSpaceVisitor(source, collector),
@@ -195,32 +75,17 @@ public abstract class WhiteSpaceVisitor extends ASTVisitor {
                 new SynchronizedStatementWhiteSpaceVisitor(source, collector),
                 new ThrowStatementWhiteSpaceVisitor(source, collector),
                 new TryWithResourceStatementWhiteSpaceVisitor(source, collector),
-                new WhileStatementWhiteSpaceVisitor(source, collector)
-        );
-    }
-
-    public static List<WhiteSpaceVisitor> listExpressionWhiteSpaceVisitor(char[] source, FeatureCollector collector) {
-        return Arrays.asList(
+                new WhileStatementWhiteSpaceVisitor(source, collector),
                 new AssignExpressionWhiteSpaceVisitor(source, collector),
                 new ConditionalExpressionWhiteSpaceVisitor(source, collector),
                 new FunctionInvocationWhiteSpaceVisitor(source, collector),
                 new OperatorWhiteSpaceVisitor(source, collector),
                 new ParenthesizedExpressionWhiteSpaceVisitor(source, collector),
-                new TypeCastWhiteSpaceVisitor(source, collector)
-        );
-    }
-
-    public static List<WhiteSpaceVisitor> listArrayWhiteSpaceVisitor(char[] source, FeatureCollector collector) {
-        return Arrays.asList(
+                new TypeCastWhiteSpaceVisitor(source, collector),
                 new ArrayElementAccessVisitor(source, collector),
                 new ArrayAllocationVisitor(source, collector),
                 new ArrayDeclarationVisitor(source, collector),
-                new ArrayInitializerVisitor(source, collector)
-        );
-    }
-
-    public static List<WhiteSpaceVisitor> listDeclarationWhiteSpaceVisitor(char[] source, FeatureCollector collector) {
-        return Arrays.asList(
+                new ArrayInitializerVisitor(source, collector),
                 new AnnotationTypeVisitor(source, collector),
                 new AnnotationVisitor(source, collector),
                 new ClassDeclarationVisitor(source, collector),
@@ -230,12 +95,7 @@ public abstract class WhiteSpaceVisitor extends ASTVisitor {
                 new LabelDeclarationVisitor(source, collector),
                 new LambdaDeclarationVisitor(source, collector),
                 new LocalVariablesDeclarationVisitor(source, collector),
-                new MethodDeclarationVisitor(source, collector)
-        );
-    }
-
-    public static List<WhiteSpaceVisitor> listParameterizedWhiteSpaceVisitor(char[] source, FeatureCollector collector) {
-        return Arrays.asList(
+                new MethodDeclarationVisitor(source, collector),
                 new TypeReferenceVisitor(source, collector),
                 new TypeArgumentsVisitor(source, collector),
                 new TypeParametersVisitor(source, collector),

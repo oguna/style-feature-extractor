@@ -1,34 +1,37 @@
 package ffe.whitespace.parameterized;
 
+import ffe.FeatureCollector;
 import ffe.Token;
+import ffe.TokenSequence;
 import ffe.whitespace.Direction;
-import ffe.whitespace.FeatureCollector;
 import ffe.whitespace.WhiteSpaceVisitor;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.jetbrains.annotations.NotNull;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class TypeParametersVisitor extends WhiteSpaceVisitor {
-    public TypeParametersVisitor(char[] source, FeatureCollector featureCollector) {
-        super(source, featureCollector);
+
+    public TypeParametersVisitor(@NotNull TokenSequence tokenSequence, @NotNull FeatureCollector featureCollector) {
+        super(tokenSequence, featureCollector);
     }
 
     @Override
     public boolean visit(TypeDeclaration node) {
         if (node.typeParameters().size() > 0) {
-            Token less = searchForward(TokenNameLESS, node.getStartPosition());
+            Token less = tokenSequence.searchForwardInNode(TokenNameLESS, node);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, less, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, less, Direction.AFTER);
-            Token greater = searchForward(TokenNameGREATER, node.getStartPosition());
+            Token greater = tokenSequence.searchForwardInNode(TokenNameGREATER, node);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, greater, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, greater, Direction.AFTER);
             if (node.typeParameters().size() > 1) {
                 for (int i = 0; i < node.typeParameters().size() - 1; i++) {
                     TypeParameter type = (TypeParameter)node.typeParameters().get(i);
-                    Token comma = searchForward(TokenNameCOMMA, type.getStartPosition() + type.getLength());
+                    Token comma = tokenSequence.searchForwardAfterNode(TokenNameCOMMA, type);
                     collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_TYPE_PARAMETERS, comma, Direction.BEFORE);
                     collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_TYPE_PARAMETERS, comma, Direction.AFTER);
                 }
@@ -42,7 +45,7 @@ public class TypeParametersVisitor extends WhiteSpaceVisitor {
         if (node.typeBounds().size() > 1) {
             for (int i = 0; i < node.typeBounds().size() - 1; i++) {
                 Type type = (Type)node.typeBounds().get(i);
-                Token and = searchForward(TokenNameAND, type.getStartPosition() + type.getLength());
+                Token and = tokenSequence.searchForwardAfterNode(TokenNameAND, type);
                 collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_AND_IN_TYPE_PARAMETER, and, Direction.BEFORE);
                 collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_AND_IN_TYPE_PARAMETER, and, Direction.AFTER);
             }

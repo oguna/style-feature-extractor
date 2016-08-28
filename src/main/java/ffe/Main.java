@@ -1,6 +1,5 @@
 package ffe;
 
-import ffe.whitespace.FeatureCollector;
 import ffe.whitespace.WhiteSpaceVisitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.AST;
@@ -29,17 +28,10 @@ public class Main {
             char[] source = content.toCharArray();
             parser.setSource(source);
             CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
+            TokenSequence sequence = new TokenSequence(source);
             FeatureCollector collector = new FeatureCollector();
-            List<WhiteSpaceVisitor> statementVisitors = WhiteSpaceVisitor.listStatementWhiteSpaceVisitor(source, collector);
-            statementVisitors.forEach(unit::accept);
-            List<WhiteSpaceVisitor> expressionVisitors = WhiteSpaceVisitor.listExpressionWhiteSpaceVisitor(source, collector);
-            expressionVisitors.forEach(unit::accept);
-            List<WhiteSpaceVisitor> arrayVisitors = WhiteSpaceVisitor.listArrayWhiteSpaceVisitor(source, collector);
-            arrayVisitors.forEach(unit::accept);
-            List<WhiteSpaceVisitor> declarationVisitors = WhiteSpaceVisitor.listDeclarationWhiteSpaceVisitor(source, collector);
-            declarationVisitors.forEach(unit::accept);
-            List<WhiteSpaceVisitor> parameterizedVisitors  = WhiteSpaceVisitor.listParameterizedWhiteSpaceVisitor(source, collector);
-            parameterizedVisitors.forEach(unit::accept);
+            List<WhiteSpaceVisitor> visitors = WhiteSpaceVisitor.listWhiteSpaceVisitor(sequence, collector);
+            visitors.forEach(unit::accept);
             collector.dump(new File("out/" + target.toFile().getName() + ".csv"));
         }
     }

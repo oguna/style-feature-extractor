@@ -1,4 +1,6 @@
-package ffe.whitespace;
+package ffe;
+
+import ffe.whitespace.WhiteSpaceFormatFeature;
 
 import java.io.BufferedWriter;
 import java.io.File;
