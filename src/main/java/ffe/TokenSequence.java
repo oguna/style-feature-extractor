@@ -26,11 +26,12 @@ public class TokenSequence {
     }
 
     public boolean existWhiteSpaceBeforeToken(Token token) {
-        return Character.isWhitespace(token.position - 1);
+        return Character.isWhitespace(source[token.position - 1]);
     }
 
     public boolean existWhiteSpaceAfterToken(Token token) {
-        return Character.isWhitespace(token.position + token.length);
+        int pos = token.position + token.length;
+        return pos >= source.length || Character.isWhitespace(source[token.position + token.length]);
     }
 
     public TokenSequence(@NotNull char[] source) {
