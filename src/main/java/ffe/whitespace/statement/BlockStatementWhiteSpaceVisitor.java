@@ -23,7 +23,7 @@ public class BlockStatementWhiteSpaceVisitor extends WhiteSpaceVisitor {
         Token openingBrace = tokenSequence.searchForwardInNode(TokenNameLBRACE, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK, openingBrace, Direction.BEFORE);
 
-        Token closingBrace = tokenSequence.searchForwardAfterNode(TokenNameRBRACE, node);
+        Token closingBrace = tokenSequence.searchBackwardInNode(TokenNameRBRACE, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK, closingBrace, Direction.AFTER);
 
         return super.visit(node);

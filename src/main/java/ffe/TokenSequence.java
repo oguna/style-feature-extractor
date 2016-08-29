@@ -85,7 +85,7 @@ public class TokenSequence {
         while (node.getStartPosition() + node.getLength() >= tokens[endIndex].position + tokens[endIndex].length) {
             endIndex++;
         }
-        for (int i = endIndex; i >= startIndex; i--) {
+        for (int i = endIndex - 1; i >= startIndex; i--) {
             if (tokenType == tokens[i].tokenType) {
                 return tokens[i];
             }
@@ -114,7 +114,7 @@ public class TokenSequence {
         while (node.getStartPosition() + node.getLength() != tokens[startIndex].position + tokens[startIndex].length) {
             startIndex++;
         }
-        for (int i = startIndex + 1; i < tokens.length; i++) {
+        for (int i = startIndex; i < tokens.length; i++) {
             if (tokenType == tokens[i].tokenType) {
                 return tokens[i];
             }
