@@ -19,10 +19,10 @@ public class ArrayInitializerVisitor extends WhiteSpaceVisitor {
 
     @Override
     public boolean visit(ArrayInitializer node) {
-        Token leftBrace = tokenSequence.searchForwardInNode(TokenNameLBRACKET, node);
+        Token leftBrace = tokenSequence.searchForwardInNode(TokenNameLBRACE, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ARRAY_INITIALIZER, leftBrace, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_BRACE_IN_ARRAY_INITIALIZER, leftBrace, Direction.AFTER);
-        Token rightBrace = tokenSequence.searchForwardAfterNode(TokenNameRBRACKET, node);
+        Token rightBrace = tokenSequence.searchForwardAfterNode(TokenNameRBRACE, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_BRACE_IN_ARRAY_INITIALIZER, rightBrace, Direction.BEFORE);
         if (node.expressions().size() == 0) {
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_BRACES_IN_ARRAY_INITIALIZER, leftBrace, rightBrace);

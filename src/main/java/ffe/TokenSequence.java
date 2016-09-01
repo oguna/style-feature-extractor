@@ -60,11 +60,11 @@ public class TokenSequence {
     @Nullable
     public Token searchForwardInNode(int tokenType, @NotNull ASTNode node) {
         int startIndex = 0;
-        while (node.getStartPosition() != tokens[startIndex].position) {
+        while (node.getStartPosition() > tokens[startIndex].position) {
             startIndex++;
         }
         int endIndex = startIndex;
-        while (node.getStartPosition() + node.getLength() != tokens[endIndex].position + tokens[endIndex].length) {
+        while (node.getStartPosition() + node.getLength() > tokens[endIndex].position + tokens[endIndex].length) {
             endIndex++;
         }
         for (int i = startIndex; i <= endIndex; i++) {
@@ -78,14 +78,14 @@ public class TokenSequence {
     @Nullable
     public Token searchBackwardInNode(int tokenType, @NotNull ASTNode node) {
         int startIndex = 0;
-        while (node.getStartPosition() != tokens[startIndex].position) {
+        while (node.getStartPosition() > tokens[startIndex].position) {
             startIndex++;
         }
         int endIndex = startIndex;
-        while (node.getStartPosition() + node.getLength() >= tokens[endIndex].position + tokens[endIndex].length) {
+        while (node.getStartPosition() + node.getLength() > tokens[endIndex].position + tokens[endIndex].length) {
             endIndex++;
         }
-        for (int i = endIndex - 1; i >= startIndex; i--) {
+        for (int i = endIndex; i >= startIndex; i--) {
             if (tokenType == tokens[i].tokenType) {
                 return tokens[i];
             }
@@ -96,7 +96,7 @@ public class TokenSequence {
     @Nullable
     public Token searchBackwardBeforeNode(int tokenType, @NotNull ASTNode node) {
         int startIndex = 0;
-        while (node.getStartPosition() != tokens[startIndex].position) {
+        while (node.getStartPosition() > tokens[startIndex].position) {
             startIndex++;
         }
         for (int i = startIndex - 1; i >= 0; i--) {
@@ -111,7 +111,7 @@ public class TokenSequence {
     @Nullable
     public Token searchForwardAfterNode(int tokenType, @NotNull ASTNode node) {
         int startIndex = 0;
-        while (node.getStartPosition() + node.getLength() != tokens[startIndex].position + tokens[startIndex].length) {
+        while (node.getStartPosition() + node.getLength() > tokens[startIndex].position + tokens[startIndex].length) {
             startIndex++;
         }
         for (int i = startIndex; i < tokens.length; i++) {

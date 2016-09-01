@@ -5,6 +5,7 @@ import ffe.Token;
 import ffe.TokenSequence;
 import ffe.whitespace.Direction;
 import ffe.whitespace.WhiteSpaceVisitor;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
@@ -24,9 +25,22 @@ public class TypeArgumentsVisitor extends WhiteSpaceVisitor {
             Token less = tokenSequence.searchForwardInNode(TokenNameLESS, node);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, less, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, less, Direction.AFTER);
-            Token greater = tokenSequence.searchForwardInNode(TokenNameGREATER, node);
-            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, greater, Direction.BEFORE);
-            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, greater, Direction.AFTER);
+            Token greater = tokenSequence.searchForwardAfterNode(TokenNameGREATER, (ASTNode) node.typeArguments().get(node.typeArguments().size() - 1));
+            Token rightShift = tokenSequence.searchForwardAfterNode(TokenNameRIGHT_SHIFT, (ASTNode) node.typeArguments().get(node.typeArguments().size() - 1));
+            Token closing;
+            if (greater == null && rightShift != null) {
+                closing = rightShift;
+            } else if (greater != null && rightShift == null) {
+                closing = greater;
+            } else {
+                if (greater.position > rightShift.position) {
+                    closing = greater;
+                } else {
+                    closing = rightShift;
+                }
+            }
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, closing, Direction.BEFORE);
+            collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, closing, Direction.AFTER);
         }
         if (node.typeArguments().size() > 1) {
             for (int i = 0; i < node.typeArguments().size() - 1; i++) {

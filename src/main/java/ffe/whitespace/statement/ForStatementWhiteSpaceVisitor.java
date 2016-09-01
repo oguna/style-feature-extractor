@@ -21,31 +21,45 @@ public class ForStatementWhiteSpaceVisitor extends WhiteSpaceVisitor {
 
     @Override
     public boolean visit(ForStatement node) {
+
         Token leftParen = tokenSequence.searchForwardInNode(TokenNameLPAREN, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_FOR, leftParen, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_FOR, leftParen, Direction.AFTER);
-        Token rightParen = tokenSequence.searchForwardAfterNode(TokenNameRPAREN, node.getExpression());
+        Token rightParen = tokenSequence.searchBackwardBeforeNode(TokenNameRPAREN, node.getBody());
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_FOR, rightParen, Direction.BEFORE);
         List initList = node.initializers();
-        for (Object initNode : initList) {
-            if (initNode instanceof Assignment) {
-            } else {
-                VariableDeclarationExpression  vde = (VariableDeclarationExpression )initNode;
-                List vdeFragments = vde.fragments();
-                if (vdeFragments.size() >= 2) {
-                    for (int i = 0; i < vdeFragments.size() - 1; i++) {
-                        VariableDeclarationFragment vdef = (VariableDeclarationFragment) vdeFragments.get(i);
-                        Token comma = tokenSequence.searchForwardAfterNode(TokenNameCOMMA, vdef);
-                        collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_FOR_INITS, comma, Direction.BEFORE);
-                        collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_FOR_INITS, comma, Direction.AFTER);
-                    }
+        if (initList.size() == 1 && initList.get(0) instanceof VariableDeclarationExpression) {
+            VariableDeclarationExpression vde = (VariableDeclarationExpression) initList.get(0);
+            List vdeFragments = vde.fragments();
+            if (vdeFragments.size() >= 2) {
+                for (int i = 0; i < vdeFragments.size() - 1; i++) {
+                    VariableDeclarationFragment vdef = (VariableDeclarationFragment) vdeFragments.get(i);
+                    Token comma = tokenSequence.searchForwardAfterNode(TokenNameCOMMA, vdef);
+                    collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_FOR_INITS, comma, Direction.BEFORE);
+                    collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_FOR_INITS, comma, Direction.AFTER);
                 }
             }
+        } else if (initList.size() >= 2) {
+            for (int i = 0; i < initList.size() - 1; i++) {
+                Token comma = tokenSequence.searchForwardAfterNode(TokenNameCOMMA, (ASTNode) initList.get(i));
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_FOR_INITS, comma, Direction.BEFORE);
+                collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_FOR_INITS, comma, Direction.AFTER);
+            }
         }
-        Token semicolon1 = tokenSequence.searchBackwardBeforeNode(TokenNameSEMICOLON, node.getExpression());
+        Token semicolon1;
+        if (node.initializers().size() == 0) {
+            semicolon1 = tokenSequence.searchForwardInNode(TokenNameSEMICOLON, node);
+        } else {
+            semicolon1 = tokenSequence.searchForwardAfterNode(TokenNameSEMICOLON, (ASTNode) node.initializers().get(node.initializers().size()-1));
+        }
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON_IN_FOR, semicolon1, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_SEMICOLON_IN_FOR, semicolon1, Direction.AFTER);
-        Token semicolon2 = tokenSequence.searchForwardAfterNode(TokenNameSEMICOLON, node.getExpression());
+        Token semicolon2;
+        if (node.updaters().size() == 0) {
+            semicolon2 = tokenSequence.searchBackwardBeforeNode(TokenNameSEMICOLON, node.getBody());
+        } else {
+            semicolon2 = tokenSequence.searchBackwardBeforeNode(TokenNameSEMICOLON, (ASTNode) node.updaters().get(node.updaters().size()-1));
+        }
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON_IN_FOR, semicolon2, Direction.BEFORE);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_SEMICOLON_IN_FOR, semicolon2, Direction.AFTER);
         return super.visit(node);
