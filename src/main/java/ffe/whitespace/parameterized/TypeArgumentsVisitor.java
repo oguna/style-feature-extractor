@@ -11,6 +11,8 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class TypeArgumentsVisitor extends WhiteSpaceVisitor {
@@ -25,20 +27,7 @@ public class TypeArgumentsVisitor extends WhiteSpaceVisitor {
             Token less = tokenSequence.searchForwardInNode(TokenNameLESS, node);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, less, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, less, Direction.AFTER);
-            Token greater = tokenSequence.searchForwardAfterNode(TokenNameGREATER, (ASTNode) node.typeArguments().get(node.typeArguments().size() - 1));
-            Token rightShift = tokenSequence.searchForwardAfterNode(TokenNameRIGHT_SHIFT, (ASTNode) node.typeArguments().get(node.typeArguments().size() - 1));
-            Token closing;
-            if (greater == null && rightShift != null) {
-                closing = rightShift;
-            } else if (greater != null && rightShift == null) {
-                closing = greater;
-            } else {
-                if (greater.position > rightShift.position) {
-                    closing = greater;
-                } else {
-                    closing = rightShift;
-                }
-            }
+            Token closing = tokenSequence.searchForwardAfterNode(Arrays.asList(TokenNameGREATER ,TokenNameRIGHT_SHIFT) , (ASTNode) node.typeArguments().get(node.typeArguments().size() - 1));
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, closing, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS, closing, Direction.AFTER);
         }

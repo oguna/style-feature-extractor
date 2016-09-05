@@ -6,10 +6,7 @@ import org.eclipse.jdt.internal.compiler.parser.Scanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameEOF;
 
@@ -117,6 +114,22 @@ public class TokenSequence {
         for (int i = startIndex; i < tokens.length; i++) {
             if (tokenType == tokens[i].tokenType) {
                 return tokens[i];
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public Token searchForwardAfterNode(Collection<Integer> tokenTypes, @NotNull ASTNode node) {
+        int startIndex = 0;
+        while (node.getStartPosition() + node.getLength() > tokens[startIndex].position + tokens[startIndex].length) {
+            startIndex++;
+        }
+        for (int i = startIndex; i < tokens.length; i++) {
+            for (int tokenType : tokenTypes) {
+                if (tokenType == tokens[i].tokenType) {
+                    return tokens[i];
+                }
             }
         }
         return null;

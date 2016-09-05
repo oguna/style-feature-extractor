@@ -78,6 +78,7 @@ public class ArrayAllocationVisitorTest {
         options.insert_space_before_opening_bracket_in_array_allocation_expression = false;
         CodeFormatter formatter = new DefaultCodeFormatter(options);
         getJavaSourceStream()
+                .parallel()
                 .map(source -> {
                     TextEdit edit = formatter.format(CodeFormatter.K_COMPILATION_UNIT, source, 0, source.length(), 0, "\n");
                     return Util.editedString(source, edit);
