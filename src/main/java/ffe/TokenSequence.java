@@ -73,6 +73,26 @@ public class TokenSequence {
     }
 
     @Nullable
+    public Token searchForwardInNode(Collection<Integer> tokenTypes, @NotNull ASTNode node) {
+        int startIndex = 0;
+        while (node.getStartPosition() > tokens[startIndex].position) {
+            startIndex++;
+        }
+        int endIndex = startIndex;
+        while (node.getStartPosition() + node.getLength() > tokens[endIndex].position + tokens[endIndex].length) {
+            endIndex++;
+        }
+        for (int i = startIndex; i <= endIndex; i++) {
+            for (int tokenType : tokenTypes) {
+                if (tokenType == tokens[i].tokenType) {
+                    return tokens[i];
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public Token searchBackwardInNode(int tokenType, @NotNull ASTNode node) {
         int startIndex = 0;
         while (node.getStartPosition() > tokens[startIndex].position) {

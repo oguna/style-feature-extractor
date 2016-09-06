@@ -11,6 +11,8 @@ import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class TypeParametersVisitor extends WhiteSpaceVisitor {
@@ -25,7 +27,7 @@ public class TypeParametersVisitor extends WhiteSpaceVisitor {
             Token less = tokenSequence.searchForwardInNode(TokenNameLESS, node);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, less, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, less, Direction.AFTER);
-            Token greater = tokenSequence.searchForwardInNode(TokenNameGREATER, node);
+            Token greater = tokenSequence.searchForwardInNode(Arrays.asList(TokenNameGREATER ,TokenNameRIGHT_SHIFT), node);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, greater, Direction.BEFORE);
             collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_PARAMETERS, greater, Direction.AFTER);
             if (node.typeParameters().size() > 1) {
