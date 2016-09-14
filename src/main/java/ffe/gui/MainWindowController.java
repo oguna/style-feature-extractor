@@ -8,14 +8,18 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -102,5 +106,17 @@ public class MainWindowController implements Initializable {
     @FXML
     public void exit(ActionEvent actionEvent) {
         Platform.exit();
+    }
+
+    @FXML
+    public void selectFont(ActionEvent actionEvent) {
+        FontDialog fontDialog = new FontDialog();
+        fontDialog.setTitle("Select Font");
+        Optional<Font> optFont = fontDialog.showAndWait();
+        if (optFont.isPresent()) {
+            Alert infoDialog = new Alert(Alert.AlertType.INFORMATION);
+            infoDialog.setContentText("Not Implemented!");
+            infoDialog.showAndWait();
+        }
     }
 }
