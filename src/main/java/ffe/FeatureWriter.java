@@ -1,6 +1,5 @@
 package ffe;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import ffe.whitespace.WhiteSpaceFormatFeature;
 
 import java.io.Closeable;
