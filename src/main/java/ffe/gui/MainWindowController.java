@@ -6,12 +6,14 @@ import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
@@ -65,6 +67,31 @@ public class MainWindowController implements Initializable {
             textArea.getContent().replaceText(0, 0, newValue);
         });
         textArea.getContent().replaceText(0, 0, manager.text.getValue());
+        // drop a file
+        root.setOnDragOver(event -> {
+            if ((event.getDragboard().hasFiles() && event.getDragboard().getFiles().size() == 1)
+                    || event.getDragboard().hasString()) {
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            }
+            event.consume();
+        });
+        root.setOnDragDropped(e -> {
+            Dragboard dragboard = e.getDragboard();
+            boolean success = false;
+            if (dragboard.hasFiles() && dragboard.getFiles().size() == 1) {
+                success = true;
+                try {
+                    manager.loadContent(dragboard.getFiles().get(0));
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            } else if (dragboard.hasString()) {
+                success = true;
+                manager.loadContent(dragboard.getString());
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
     }
 
     private File lastSelectedDirectory = null;

@@ -125,4 +125,8 @@ public class SourceCodeManager {
         String content = new String(Files.readAllBytes(file.toPath()));
         initData(content);
     }
+
+    public void loadContent(String content) {
+        initData(content);
+    }
 }
