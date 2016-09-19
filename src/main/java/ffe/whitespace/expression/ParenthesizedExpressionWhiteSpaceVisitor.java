@@ -22,7 +22,6 @@ public class ParenthesizedExpressionWhiteSpaceVisitor extends WhiteSpaceVisitor 
     public boolean visit(ParenthesizedExpression node) {
         Token leftParen = tokenSequence.searchForwardInNode(TokenNameLPAREN, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_PARENTHESIZED_EXPRESSION, leftParen, Direction.BEFORE);
-        collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_PARENTHESIZED_EXPRESSION, leftParen, Direction.BEFORE);
         Token rightParen = tokenSequence.searchForwardAfterNode(TokenNameRPAREN, node);
         collectFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_PARENTHESIZED_EXPRESSION, rightParen, Direction.BEFORE);
         return super.visit(node);
