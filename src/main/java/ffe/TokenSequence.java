@@ -22,11 +22,11 @@ public class TokenSequence {
         this(source.toCharArray());
     }
 
-    public boolean existWhiteSpaceBeforeToken(Token token) {
+    public boolean existWhiteSpaceBeforeToken(@NotNull Token token) {
         return Character.isWhitespace(source[token.position - 1]);
     }
 
-    public boolean existWhiteSpaceAfterToken(Token token) {
+    public boolean existWhiteSpaceAfterToken(@NotNull Token token) {
         int pos = token.position + token.length;
         return pos >= source.length || Character.isWhitespace(source[token.position + token.length]);
     }

@@ -38,7 +38,7 @@ public class TypeArgumentsVisitor extends WhiteSpaceVisitor {
 
     private void handleCommas(List<? extends ASTNode> nodes, String spaceBefore, String spaceAfter) {
         if (spaceBefore != null || spaceAfter != null) {
-            for (int i = 0; i <  nodes.size(); i++) {
+            for (int i = 1; i <  nodes.size(); i++) {
                 handleTokenBefore(nodes.get(i), TokenNameCOMMA, spaceBefore, spaceAfter);
             }
         }
