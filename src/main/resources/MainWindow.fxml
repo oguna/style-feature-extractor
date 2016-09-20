@@ -10,6 +10,9 @@
                 <SeparatorMenuItem />
                 <MenuItem text="Exit" onAction="#exit" />
             </Menu>
+            <Menu text="View">
+                <MenuItem text="Font" onAction="#selectFont" />
+            </Menu>
         </MenuBar>
     </top>
     <center>
