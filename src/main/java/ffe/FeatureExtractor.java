@@ -1,5 +1,6 @@
 package ffe;
 
+import ffe.token.Token;
 import ffe.token.TokenManager;
 import ffe.whitespace.SpacePreparator;
 import ffe.whitespace.WhiteSpaceFormatFeature;
@@ -23,15 +24,15 @@ public class FeatureExtractor {
         char[] source = content.toCharArray();
         parser.setSource(source);
         CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
-        List<ffe.token.Token> tokens = tokenizeSource(source);
+        List<Token> tokens = tokenizeSource(source);
         TokenManager manager = new TokenManager(tokens, content, DefaultCodeFormatterOptions.getDefaultSettings());
         SpacePreparator visitor = new SpacePreparator(manager);
         unit.accept(visitor);
         return visitor.features;
     }
 
-    private static List<ffe.token.Token> tokenizeSource(char[] sourceArray) {
-        List<ffe.token.Token> tokens = new ArrayList<>();
+    private static List<Token> tokenizeSource(char[] sourceArray) {
+        List<Token> tokens = new ArrayList<>();
         Scanner scanner = new Scanner(true, false, false/* nls */, 3407872L,
                 null/* taskTags */, null/* taskPriorities */, false/* taskCaseSensitive */);
         scanner.setSource(sourceArray);
@@ -40,14 +41,14 @@ public class FeatureExtractor {
                 int tokenType = scanner.getNextToken();
                 if (tokenType == TokenNameEOF)
                     break;
-                ffe.token.Token token = ffe.token.Token.fromCurrent(scanner, tokenType);
+                Token token = Token.fromCurrent(scanner, tokenType);
                 tokens.add(token);
             } catch (InvalidInputException e) {
-                ffe.token.Token token = ffe.token.Token.fromCurrent(scanner, TokenNameNotAToken);
+                Token token = Token.fromCurrent(scanner, TokenNameNotAToken);
                 tokens.add(token);
             }
         }
-        for (ffe.token.Token token : tokens) {
+        for (Token token : tokens) {
             if (token.originalStart == 0) {
                 token.spaceBefore();
             } else {
