@@ -2,8 +2,10 @@ package ffe;
 
 import ffe.token.Token;
 import ffe.token.TokenManager;
+import ffe.whitespace.Direction;
 import ffe.whitespace.SpacePreparator;
 import ffe.whitespace.WhiteSpaceFormatFeature;
+import ffe.whitespace.WhiteSpaceOption;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.dom.AST;
@@ -28,6 +30,33 @@ public class FeatureExtractor {
         TokenManager manager = new TokenManager(tokens, content, DefaultCodeFormatterOptions.getDefaultSettings());
         SpacePreparator visitor = new SpacePreparator(manager);
         unit.accept(visitor);
+        // detect space
+        for (Token token : tokens) {
+            token.clearSpaceBefore();
+            token.clearSpaceAfter();
+            if (token.originalStart == 0) {
+                token.spaceBefore();
+            } else {
+                if (Character.isWhitespace(source[token.originalStart - 1])) {
+                    token.spaceBefore();
+                }
+            }
+            if (token.originalEnd + 1 == source.length) {
+                token.spaceAfter();
+            } else {
+                if (Character.isWhitespace(source[token.originalEnd + 1])) {
+                    token.spaceAfter();
+                }
+            }
+        }
+        // collect feature values
+        for (WhiteSpaceFormatFeature feature : visitor.features) {
+            if (feature.direction == Direction.BEFORE) {
+                feature.value = feature.token.isSpaceBefore() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+            } else {
+                feature.value = feature.token.isSpaceAfter() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+            }
+        }
         return visitor.features;
     }
 
@@ -46,22 +75,6 @@ public class FeatureExtractor {
             } catch (InvalidInputException e) {
                 Token token = Token.fromCurrent(scanner, TokenNameNotAToken);
                 tokens.add(token);
-            }
-        }
-        for (Token token : tokens) {
-            if (token.originalStart == 0) {
-                token.spaceBefore();
-            } else {
-                if (Character.isSpaceChar(sourceArray[token.originalStart - 1])) {
-                    token.spaceBefore();
-                }
-            }
-            if (token.originalEnd + 1 >= sourceArray.length) {
-                token.spaceAfter();
-            } else {
-                if (Character.isSpaceChar(sourceArray[token.originalEnd + 1])) {
-                    token.spaceAfter();
-                }
             }
         }
         return tokens;
