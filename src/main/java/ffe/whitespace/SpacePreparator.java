@@ -12,89 +12,18 @@
  *******************************************************************************/
 package ffe.whitespace;
 
-import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
+import ffe.token.Token;
+import ffe.token.TokenManager;
+import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.PrefixExpression.Operator;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import ffe.token.Token;
-import ffe.token.TokenManager;
-import ffe.token.TokenTraverser;
-import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.Annotation;
-import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
-import org.eclipse.jdt.core.dom.AnnotationTypeMemberDeclaration;
-import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
-import org.eclipse.jdt.core.dom.ArrayAccess;
-import org.eclipse.jdt.core.dom.ArrayCreation;
-import org.eclipse.jdt.core.dom.ArrayInitializer;
-import org.eclipse.jdt.core.dom.ArrayType;
-import org.eclipse.jdt.core.dom.AssertStatement;
-import org.eclipse.jdt.core.dom.Assignment;
-import org.eclipse.jdt.core.dom.Block;
-import org.eclipse.jdt.core.dom.CastExpression;
-import org.eclipse.jdt.core.dom.CatchClause;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.ConditionalExpression;
-import org.eclipse.jdt.core.dom.ConstructorInvocation;
-import org.eclipse.jdt.core.dom.CreationReference;
-import org.eclipse.jdt.core.dom.Dimension;
-import org.eclipse.jdt.core.dom.DoStatement;
-import org.eclipse.jdt.core.dom.EnhancedForStatement;
-import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
-import org.eclipse.jdt.core.dom.EnumDeclaration;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.ExpressionMethodReference;
-import org.eclipse.jdt.core.dom.ExpressionStatement;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
-import org.eclipse.jdt.core.dom.ForStatement;
-import org.eclipse.jdt.core.dom.IfStatement;
-import org.eclipse.jdt.core.dom.ImportDeclaration;
-import org.eclipse.jdt.core.dom.InfixExpression;
-import org.eclipse.jdt.core.dom.InstanceofExpression;
-import org.eclipse.jdt.core.dom.IntersectionType;
-import org.eclipse.jdt.core.dom.LabeledStatement;
-import org.eclipse.jdt.core.dom.LambdaExpression;
-import org.eclipse.jdt.core.dom.MarkerAnnotation;
-import org.eclipse.jdt.core.dom.MemberValuePair;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.NormalAnnotation;
-import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.eclipse.jdt.core.dom.ParameterizedType;
-import org.eclipse.jdt.core.dom.ParenthesizedExpression;
-import org.eclipse.jdt.core.dom.PostfixExpression;
-import org.eclipse.jdt.core.dom.PrefixExpression;
-import org.eclipse.jdt.core.dom.PrefixExpression.Operator;
-import org.eclipse.jdt.core.dom.ReturnStatement;
-import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.Statement;
-import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
-import org.eclipse.jdt.core.dom.SuperMethodInvocation;
-import org.eclipse.jdt.core.dom.SuperMethodReference;
-import org.eclipse.jdt.core.dom.SwitchCase;
-import org.eclipse.jdt.core.dom.SwitchStatement;
-import org.eclipse.jdt.core.dom.SynchronizedStatement;
-import org.eclipse.jdt.core.dom.ThrowStatement;
-import org.eclipse.jdt.core.dom.TryStatement;
-import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.TypeMethodReference;
-import org.eclipse.jdt.core.dom.TypeParameter;
-import org.eclipse.jdt.core.dom.UnionType;
-import org.eclipse.jdt.core.dom.VariableDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
-import org.eclipse.jdt.core.dom.WhileStatement;
-import org.eclipse.jdt.core.dom.WildcardType;
-import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
-import org.eclipse.jdt.internal.compiler.parser.ScannerHelper;
-import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class SpacePreparator extends ASTVisitor {
     TokenManager tm;
@@ -109,7 +38,7 @@ public class SpacePreparator extends ASTVisitor {
     private void addFeature(String format, boolean space, Token token) {
         Direction direction = format.contains("before") ? Direction.BEFORE : Direction.AFTER;
         WhiteSpaceOption option = space ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
-        ffe.Token token_ = new ffe.Token(token.tokenType, token.originalStart, token.originalEnd, -1);
+        ffe.Token token_ = new ffe.Token(token.tokenType, token.originalStart, token.originalEnd - token.originalStart + 1, -1);
         features.add(new WhiteSpaceFormatFeature(format, option, token_, direction));
     }
 
