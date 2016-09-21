@@ -99,7 +99,7 @@ import org.jetbrains.annotations.Nullable;
 public class SpacePreparator extends ASTVisitor {
     TokenManager tm;
     @NotNull
-    private final List<WhiteSpaceFormatFeature> features;
+    public final List<WhiteSpaceFormatFeature> features;
 
     public SpacePreparator(TokenManager tokenManager) {
         this.tm = tokenManager;
@@ -107,7 +107,10 @@ public class SpacePreparator extends ASTVisitor {
     }
 
     private void addFeature(String format, boolean space, Token token) {
-
+        Direction direction = format.contains("before") ? Direction.BEFORE : Direction.AFTER;
+        WhiteSpaceOption option = space ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+        ffe.Token token_ = new ffe.Token(token.tokenType, token.originalStart, token.originalEnd, -1);
+        features.add(new WhiteSpaceFormatFeature(format, option, token_, direction));
     }
 
     @Override
