@@ -1,5 +1,6 @@
 package ffe.gui;
 
+import ffe.FeatureExtractor;
 import ffe.FeatureWriter;
 import ffe.token.Token;
 import ffe.token.TokenManager;
@@ -106,15 +107,7 @@ public class SourceCodeManager {
     }
 
     public void initData(String content) {
-        ASTParser parser = ASTParser.newParser(AST.JLS8);
-        char[] source = content.toCharArray();
-        parser.setSource(source);
-        CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
-        List<ffe.token.Token> tokens = tokenizeSource(source);
-        TokenManager manager = new TokenManager(tokens, content, DefaultCodeFormatterOptions.getDefaultSettings());
-        SpacePreparator visitor = new SpacePreparator(manager);
-        unit.accept(visitor);
-        List<WhiteSpaceFormatFeature> features = new ArrayList<>(visitor.features);
+        List<WhiteSpaceFormatFeature> features = FeatureExtractor.extract(content);
         features.sort((a,b) -> a.token.originalStart - b.token.originalStart);
         this.scanner = getScanner(content);
         this.features.clear();
@@ -128,42 +121,5 @@ public class SourceCodeManager {
     }
     public void loadContent(String content) {
         initData(content);
-    }
-
-    private static List<ffe.token.Token> tokenizeSource(char[] sourceArray) {
-        List<ffe.token.Token> tokens = new ArrayList<>();
-        Scanner scanner = new Scanner(true, false, false/* nls */, 3407872L,
-                null/* taskTags */, null/* taskPriorities */, false/* taskCaseSensitive */);
-        scanner.setSource(sourceArray);
-        while (true) {
-            try {
-                int tokenType = scanner.getNextToken();
-                if (tokenType == TokenNameEOF)
-                    break;
-                ffe.token.Token token = ffe.token.Token.fromCurrent(scanner, tokenType);
-                tokens.add(token);
-            } catch (InvalidInputException e) {
-                ffe.token.Token token = ffe.token.Token.fromCurrent(scanner, TokenNameNotAToken);
-                tokens.add(token);
-            }
-        }
-        // トークンに前後の空白情報を付与する
-        for (ffe.token.Token token : tokens) {
-            if (token.originalStart == 0) {
-                token.spaceBefore();
-            } else {
-                if (Character.isSpaceChar(sourceArray[token.originalStart - 1])) {
-                    token.spaceBefore();
-                }
-            }
-            if (token.originalEnd == sourceArray.length) {
-                token.spaceAfter();
-            } else {
-                if (Character.isSpaceChar(sourceArray[token.originalEnd])) {
-                    token.spaceAfter();
-                }
-            }
-        }
-        return tokens;
     }
 }
