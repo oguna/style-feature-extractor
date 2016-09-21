@@ -45,8 +45,6 @@ public class TokenManager implements Iterable<Token> {
     private final int tabChar;
     private final boolean wrapWithSpaces;
 
-    final CommentWrapExecutor commentWrapper;
-
     private HashMap<Integer, Integer> tokenIndexToNLSAlign;
     private List<Token[]> formatOffTagPairs;
     private int headerEndIndex = 0;
@@ -57,7 +55,6 @@ public class TokenManager implements Iterable<Token> {
         this.tabSize = options.tab_size;
         this.tabChar = options.tab_char;
         this.wrapWithSpaces = options.use_tabs_only_for_leading_indentations;
-        this.commentWrapper = new CommentWrapExecutor(this, options);
     }
 
     public TokenManager(List<Token> tokens, TokenManager parent) {
@@ -66,7 +63,6 @@ public class TokenManager implements Iterable<Token> {
         this.tabSize = parent.tabSize;
         this.tabChar = parent.tabChar;
         this.wrapWithSpaces = parent.wrapWithSpaces;
-        this.commentWrapper = parent.commentWrapper;
     }
 
     public Token get(int index) {
@@ -250,52 +246,6 @@ public class TokenManager implements Iterable<Token> {
         return result;
     }
 
-    private TokenTraverser positionInLineCounter = new TokenTraverser() {
-        private boolean isNLSTagInLine = false;
-
-        @Override
-        protected boolean token(Token traversed, int index) {
-            if (index == this.value) {
-                this.isNLSTagInLine = false;
-                return false;
-            }
-            if (traversed.hasNLSTag()) {
-                assert traversed.tokenType == TokenNameStringLiteral;
-                this.isNLSTagInLine = true;
-            }
-            if (traversed.getAlign() > 0)
-                this.counter = traversed.getAlign();
-            List<Token> internalStructure = traversed.getInternalStructure();
-            if (internalStructure != null && !internalStructure.isEmpty()) {
-                assert traversed.tokenType == TokenNameCOMMENT_BLOCK || traversed.tokenType == TokenNameCOMMENT_JAVADOC;
-                this.counter = TokenManager.this.commentWrapper.wrapMultiLineComment(traversed, this.counter, true,
-                        this.isNLSTagInLine);
-            } else {
-                this.counter += getLength(traversed, this.counter);
-            }
-            if (isSpaceAfter())
-                this.counter++;
-            return true;
-        }
-    };
-
-    public int getPositionInLine(int tokenIndex) {
-        Token token = get(tokenIndex);
-        if (token.getAlign() > 0)
-            return get(tokenIndex).getAlign();
-        // find the first token in line and calculate position of given token
-        int firstTokenIndex = token.getLineBreaksBefore() > 0 ? tokenIndex : findFirstTokenInLine(tokenIndex);
-        Token firstToken = get(firstTokenIndex);
-        int startingPosition = toIndent(firstToken.getIndent(), firstToken.getWrapPolicy() != null);
-        if (firstTokenIndex == tokenIndex)
-            return startingPosition;
-
-        this.positionInLineCounter.value = tokenIndex;
-        this.positionInLineCounter.counter = startingPosition;
-        traverse(firstTokenIndex, this.positionInLineCounter);
-        return this.positionInLineCounter.counter;
-    }
-
     public int findSourcePositionInLine(int position) {
         int lineStartPosition = position;
         char c;
@@ -381,25 +331,6 @@ public class TokenManager implements Iterable<Token> {
 
     public int traverse(int startIndex, TokenTraverser traverser) {
         return traverser.traverse(this.tokens, startIndex);
-    }
-
-    public int findFirstTokenInLine(int startIndex) {
-        return findFirstTokenInLine(startIndex, false, false);
-    }
-
-    public int findFirstTokenInLine(int startIndex, boolean includeWraps, boolean includeForced) {
-        Token previous = get(startIndex); // going backwards, previous has higher index than current
-        for (int i = startIndex - 1; i >= 0; i--) {
-            Token token = get(i);
-            if (token.getLineBreaksAfter() > 0 || previous.getLineBreaksBefore() > 0) {
-                boolean include = previous.getWrapPolicy() != null
-                        && (previous.getWrapPolicy().wrapMode == WrapMode.FORCED ? includeForced : includeWraps);
-                if (!include)
-                    return i + 1;
-            }
-            previous = token;
-        }
-        return 0;
     }
 
     private boolean tokenInside(ASTNode node, int index) {

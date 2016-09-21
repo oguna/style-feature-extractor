@@ -14,6 +14,7 @@ package ffe.whitespace;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ffe.token.Token;
@@ -89,16 +90,24 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.WildcardType;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.internal.compiler.parser.ScannerHelper;
 import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SpacePreparator extends ASTVisitor {
     TokenManager tm;
-    private DefaultCodeFormatterOptions options;
+    @NotNull
+    private final List<WhiteSpaceFormatFeature> features;
 
-    public SpacePreparator(TokenManager tokenManager, DefaultCodeFormatterOptions options) {
+    public SpacePreparator(TokenManager tokenManager) {
         this.tm = tokenManager;
-        this.options = options;
+        this.features = new ArrayList<>();
+    }
+
+    private void addFeature(String format, boolean space, Token token) {
+
     }
 
     @Override
@@ -124,31 +133,31 @@ public class SpacePreparator extends ASTVisitor {
         if (node.getName().getStartPosition() == -1)
             return true; // this is a fake type created by parsing in class body mode
 
-        handleToken(node.getName(), TokenNameIdentifier, true, false);
+        handleToken(node.getName(), TokenNameIdentifier, null, null);
 
         List<TypeParameter> typeParameters = node.typeParameters();
         handleTypeParameters(typeParameters);
 
         if (!node.isInterface() && !node.superInterfaceTypes().isEmpty()) {
             // fix for: class A<E> extends ArrayList<String>implements Callable<String>
-            handleToken(node.getName(), TokenNameimplements, true, false);
+            handleToken(node.getName(), TokenNameimplements, null, null);
         }
 
         handleToken(node.getName(), TokenNameLBRACE,
-                this.options.insert_space_before_opening_brace_in_type_declaration, false);
-        handleCommas(node.superInterfaceTypes(), this.options.insert_space_before_comma_in_superinterfaces,
-                this.options.insert_space_after_comma_in_superinterfaces);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_TYPE_DECLARATION, null);
+        handleCommas(node.superInterfaceTypes(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_SUPERINTERFACES,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_SUPERINTERFACES);
         return true;
     }
 
     @Override
     public boolean visit(EnumDeclaration node) {
         handleToken(node.getName(), TokenNameLBRACE,
-                this.options.insert_space_before_opening_brace_in_enum_declaration, false);
-        handleCommas(node.superInterfaceTypes(), this.options.insert_space_before_comma_in_superinterfaces,
-                this.options.insert_space_after_comma_in_superinterfaces);
-        handleCommas(node.enumConstants(), this.options.insert_space_before_comma_in_enum_declarations,
-                this.options.insert_space_after_comma_in_enum_declarations);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ENUM_DECLARATION, null);
+        handleCommas(node.superInterfaceTypes(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_SUPERINTERFACES,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_SUPERINTERFACES);
+        handleCommas(node.enumConstants(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ENUM_DECLARATIONS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ENUM_DECLARATIONS);
         return true;
     }
 
@@ -158,10 +167,10 @@ public class SpacePreparator extends ASTVisitor {
         Token openingParen = null;
         if (!arguments.isEmpty()) {
             openingParen = this.tm.firstTokenIn(node, TokenNameLPAREN);
-            if (this.options.insert_space_after_opening_paren_in_enum_constant)
-                openingParen.spaceAfter();
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ENUM_CONSTANT, openingParen.isSpaceAfter(), openingParen);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ENUM_CONSTANT, openingParen.isSpaceAfter(), openingParen);
             handleTokenAfter(arguments.get(arguments.size() - 1), TokenNameRPAREN,
-                    this.options.insert_space_before_closing_paren_in_enum_constant, false);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_ENUM_CONSTANT, null);
         } else {
             // look for empty parenthesis, may not be there
             int from = this.tm.firstIndexIn(node.getName(), TokenNameIdentifier) + 1;
@@ -171,66 +180,67 @@ public class SpacePreparator extends ASTVisitor {
             for (int i = from; i <= to; i++) {
                 if (this.tm.get(i).tokenType == TokenNameLPAREN) {
                     openingParen = this.tm.get(i);
-                    if (this.options.insert_space_between_empty_parens_in_enum_constant)
-                        openingParen.spaceAfter();
+                    addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_ENUM_CONSTANT, openingParen.isSpaceAfter(), openingParen);
                     break;
                 }
             }
         }
-        if (openingParen != null && this.options.insert_space_before_opening_paren_in_enum_constant)
-            openingParen.spaceBefore();
-        handleCommas(arguments, this.options.insert_space_before_comma_in_enum_constant_arguments,
-                this.options.insert_space_after_comma_in_enum_constant_arguments);
+        if (openingParen != null) {
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_ENUM_CONSTANT, openingParen.isSpaceBefore(), openingParen);
+        }
+        handleCommas(arguments, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ENUM_CONSTANT_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ENUM_CONSTANT_ARGUMENTS);
         return true;
     }
 
     @Override
     public boolean visit(AnonymousClassDeclaration node) {
-        boolean spaceBeforeOpenBrace = this.options.insert_space_before_opening_brace_in_anonymous_type_declaration;
+        String spaceBeforeOpenBrace = DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ANONYMOUS_TYPE_DECLARATION;
         if (node.getParent() instanceof EnumConstantDeclaration)
-            spaceBeforeOpenBrace = this.options.insert_space_before_opening_brace_in_enum_constant;
-        handleToken(node, TokenNameLBRACE, spaceBeforeOpenBrace, false);
+            spaceBeforeOpenBrace = DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ENUM_CONSTANT;
+        handleToken(node, TokenNameLBRACE, spaceBeforeOpenBrace, null);
         return true;
     }
 
     @Override
     public boolean visit(MethodDeclaration node) {
-        handleToken(node.getName(), TokenNameIdentifier, true, false);
+        handleToken(node.getName(), TokenNameIdentifier, null, null);
 
-        boolean spaceBeforeOpenParen = node.isConstructor()
-                ? this.options.insert_space_before_opening_paren_in_constructor_declaration
-                : this.options.insert_space_before_opening_paren_in_method_declaration;
-        boolean spaceAfterOpenParen = node.isConstructor()
-                ? this.options.insert_space_after_opening_paren_in_constructor_declaration
-                : this.options.insert_space_after_opening_paren_in_method_declaration;
-        boolean spaceBetweenEmptyParens = node.isConstructor()
-                ? this.options.insert_space_between_empty_parens_in_constructor_declaration
-                : this.options.insert_space_between_empty_parens_in_method_declaration;
+        String spaceBeforeOpenParen = node.isConstructor()
+                ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_CONSTRUCTOR_DECLARATION
+                : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_DECLARATION;
+        String spaceAfterOpenParen = node.isConstructor()
+                ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_CONSTRUCTOR_DECLARATION
+                : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_METHOD_DECLARATION;
+        String spaceBetweenEmptyParens = node.isConstructor()
+                ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_CONSTRUCTOR_DECLARATION
+                : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_METHOD_DECLARATION;
         if (handleEmptyParens(node.getName(), spaceBetweenEmptyParens)) {
-            handleToken(node.getName(), TokenNameLPAREN, spaceBeforeOpenParen, false);
+            handleToken(node.getName(), TokenNameLPAREN, spaceBeforeOpenParen, null);
         } else {
             handleToken(node.getName(), TokenNameLPAREN, spaceBeforeOpenParen, spaceAfterOpenParen);
 
-            boolean spaceBeforeCloseParen = node.isConstructor()
-                    ? this.options.insert_space_before_closing_paren_in_constructor_declaration
-                    : this.options.insert_space_before_closing_paren_in_method_declaration;
-            if (spaceBeforeCloseParen) {
-                List<SingleVariableDeclaration> params = node.parameters();
-                ASTNode beforeBrace = params.isEmpty() ? node.getName() : params.get(params.size() - 1);
-                handleTokenAfter(beforeBrace, TokenNameRPAREN, true, false);
-            }
+            String spaceBeforeCloseParen = node.isConstructor()
+                    ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_CONSTRUCTOR_DECLARATION
+                    : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_DECLARATION;
+            List<SingleVariableDeclaration> params = node.parameters();
+            ASTNode beforeBrace = params.isEmpty() ? node.getName() : params.get(params.size() - 1);
+            handleTokenAfter(beforeBrace, TokenNameRPAREN, spaceBeforeCloseParen, null);
         }
 
-        if ((node.isConstructor() ? this.options.insert_space_before_opening_brace_in_constructor_declaration
-                : this.options.insert_space_before_opening_brace_in_method_declaration) && node.getBody() != null)
-            this.tm.firstTokenIn(node.getBody(), TokenNameLBRACE).spaceBefore();
+        if (node.getBody() != null) {
+            String featureName = node.isConstructor() ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_CONSTRUCTOR_DECLARATION
+                    : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_METHOD_DECLARATION;
+            boolean hasSpace = this.tm.firstTokenIn(node.getBody(), TokenNameLBRACE).isSpaceBefore();
+            addFeature(featureName, hasSpace, this.tm.firstTokenIn(node.getBody(), TokenNameLBRACE));
+        }
 
-        boolean beforeComma = node.isConstructor()
-                ? this.options.insert_space_before_comma_in_constructor_declaration_parameters
-                : this.options.insert_space_before_comma_in_method_declaration_parameters;
-        boolean afterComma = node.isConstructor()
-                ? this.options.insert_space_after_comma_in_constructor_declaration_parameters
-                : this.options.insert_space_after_comma_in_method_declaration_parameters;
+        String beforeComma = node.isConstructor()
+                ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_CONSTRUCTOR_DECLARATION_PARAMETERS
+                : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_METHOD_DECLARATION_PARAMETERS;
+        String afterComma = node.isConstructor()
+                ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_CONSTRUCTOR_DECLARATION_PARAMETERS
+                : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_DECLARATION_PARAMETERS;
         handleCommas(node.parameters(), beforeComma, afterComma);
 
         List<Type> thrownExceptionTypes = node.thrownExceptionTypes();
@@ -238,19 +248,19 @@ public class SpacePreparator extends ASTVisitor {
             this.tm.firstTokenBefore(thrownExceptionTypes.get(0), TokenNamethrows).spaceBefore();
 
             beforeComma = node.isConstructor()
-                    ? this.options.insert_space_before_comma_in_constructor_declaration_throws
-                    : this.options.insert_space_before_comma_in_method_declaration_throws;
+                    ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_CONSTRUCTOR_DECLARATION_THROWS
+                    : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_METHOD_DECLARATION_THROWS;
             afterComma = node.isConstructor()
-                    ? this.options.insert_space_after_comma_in_constructor_declaration_throws
-                    : this.options.insert_space_after_comma_in_method_declaration_throws;
+                    ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_CONSTRUCTOR_DECLARATION_THROWS
+                    : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_DECLARATION_THROWS;
             handleCommas(thrownExceptionTypes, beforeComma, afterComma);
         }
 
         List<TypeParameter> typeParameters = node.typeParameters();
         if (!typeParameters.isEmpty()) {
             handleTypeParameters(typeParameters);
-            handleTokenBefore(typeParameters.get(0), TokenNameLESS, true, false);
-            handleTokenAfter(typeParameters.get(typeParameters.size() - 1), TokenNameGREATER, false, true);
+            handleTokenBefore(typeParameters.get(0), TokenNameLESS, null, null);
+            handleTokenAfter(typeParameters.get(typeParameters.size() - 1), TokenNameGREATER, null, null);
         }
 
         handleSemicolon(node);
@@ -260,38 +270,38 @@ public class SpacePreparator extends ASTVisitor {
     private void handleTypeParameters(List<TypeParameter> typeParameters) {
         if (!typeParameters.isEmpty()) {
             handleTokenBefore(typeParameters.get(0), TokenNameLESS,
-                    this.options.insert_space_before_opening_angle_bracket_in_type_parameters,
-                    this.options.insert_space_after_opening_angle_bracket_in_type_parameters);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETERS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETERS);
             handleTokenAfter(typeParameters.get(typeParameters.size() - 1), TokenNameGREATER,
-                    this.options.insert_space_before_closing_angle_bracket_in_type_parameters,
-                    this.options.insert_space_after_closing_angle_bracket_in_type_parameters);
-            handleCommas(typeParameters, this.options.insert_space_before_comma_in_type_parameters,
-                    this.options.insert_space_after_comma_in_type_parameters);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_PARAMETERS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_PARAMETERS);
+            handleCommas(typeParameters, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_TYPE_PARAMETERS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_TYPE_PARAMETERS);
         }
     }
 
     @Override
     public boolean visit(FieldDeclaration node) {
-        handleToken((ASTNode) node.fragments().get(0), TokenNameIdentifier, true, false);
-        handleCommas(node.fragments(), this.options.insert_space_before_comma_in_multiple_field_declarations,
-                this.options.insert_space_after_comma_in_multiple_field_declarations);
+        handleToken((ASTNode) node.fragments().get(0), TokenNameIdentifier, null, null);
+        handleCommas(node.fragments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_MULTIPLE_FIELD_DECLARATIONS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_MULTIPLE_FIELD_DECLARATIONS);
         handleSemicolon(node);
         return true;
     }
 
     @Override
     public boolean visit(VariableDeclarationStatement node) {
-        handleToken((ASTNode) node.fragments().get(0), TokenNameIdentifier, true, false);
-        handleCommas(node.fragments(), this.options.insert_space_before_comma_in_multiple_local_declarations,
-                this.options.insert_space_after_comma_in_multiple_local_declarations);
+        handleToken((ASTNode) node.fragments().get(0), TokenNameIdentifier, null, null);
+        handleCommas(node.fragments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_MULTIPLE_LOCAL_DECLARATIONS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_MULTIPLE_LOCAL_DECLARATIONS);
         return true;
     }
 
     @Override
     public boolean visit(VariableDeclarationFragment node) {
         if (node.getInitializer() != null) {
-            handleToken(node.getName(), TokenNameEQUAL, this.options.insert_space_before_assignment_operator,
-                    this.options.insert_space_after_assignment_operator);
+            handleToken(node.getName(), TokenNameEQUAL, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ASSIGNMENT_OPERATOR,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ASSIGNMENT_OPERATOR);
         }
         return true;
     }
@@ -300,26 +310,26 @@ public class SpacePreparator extends ASTVisitor {
     public void endVisit(SingleVariableDeclaration node) {
         // this must be endVisit in case a space added by a visit on a child node needs to be cleared
         if (node.isVarargs()) {
-            handleTokenBefore(node.getName(), TokenNameELLIPSIS, this.options.insert_space_before_ellipsis,
-                    this.options.insert_space_after_ellipsis);
+            handleTokenBefore(node.getName(), TokenNameELLIPSIS, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ELLIPSIS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ELLIPSIS);
             List<Annotation> varargsAnnotations = node.varargsAnnotations();
             if (!varargsAnnotations.isEmpty()) {
-                this.tm.firstTokenIn(varargsAnnotations.get(0), TokenNameAT).spaceBefore();
-                this.tm.lastTokenIn(varargsAnnotations.get(varargsAnnotations.size() - 1), -1).clearSpaceAfter();
+                //this.tm.firstTokenIn(varargsAnnotations.get(0), TokenNameAT).spaceBefore();
+                //this.tm.lastTokenIn(varargsAnnotations.get(varargsAnnotations.size() - 1), -1).clearSpaceAfter();
             }
         } else {
-            handleToken(node.getName(), TokenNameIdentifier, true, false);
+            handleToken(node.getName(), TokenNameIdentifier, null, null);
         }
     }
 
     @Override
     public boolean visit(SwitchStatement node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_switch,
-                this.options.insert_space_after_opening_paren_in_switch);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_SWITCH,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_SWITCH);
         handleTokenAfter(node.getExpression(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_switch, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_SWITCH, null);
         handleTokenAfter(node.getExpression(), TokenNameLBRACE,
-                this.options.insert_space_before_opening_brace_in_switch, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_SWITCH, null);
         handleSemicolon(node.statements());
         return true;
     }
@@ -327,10 +337,10 @@ public class SpacePreparator extends ASTVisitor {
     @Override
     public boolean visit(SwitchCase node) {
         if (node.isDefault()) {
-            handleToken(node, TokenNameCOLON, this.options.insert_space_before_colon_in_default, false);
+            handleToken(node, TokenNameCOLON, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_DEFAULT, null);
         } else {
-            handleToken(node, TokenNamecase, false, true);
-            handleToken(node.getExpression(), TokenNameCOLON, this.options.insert_space_before_colon_in_case, false);
+            handleToken(node, TokenNamecase, null, null);
+            handleToken(node.getExpression(), TokenNameCOLON, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_CASE, null);
         }
         return true;
     }
@@ -338,30 +348,30 @@ public class SpacePreparator extends ASTVisitor {
     @Override
     public boolean visit(DoStatement node) {
         handleTokenBefore(node.getExpression(), TokenNameLPAREN,
-                this.options.insert_space_before_opening_paren_in_while,
-                this.options.insert_space_after_opening_paren_in_while);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_WHILE,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_WHILE);
         handleTokenBefore(node.getExpression(), TokenNamewhile,
-                !(node.getBody() instanceof Block) || this.options.insert_space_after_closing_brace_in_block, false);
+                !(node.getBody() instanceof Block) ? null : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK, null);
         handleTokenAfter(node.getExpression(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_while, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_WHILE, null);
         return true;
     }
 
     @Override
     public boolean visit(WhileStatement node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_while,
-                this.options.insert_space_after_opening_paren_in_while);
-        handleTokenBefore(node.getBody(), TokenNameRPAREN, this.options.insert_space_before_closing_paren_in_while,
-                false);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_WHILE,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_WHILE);
+        handleTokenBefore(node.getBody(), TokenNameRPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_WHILE,
+                null);
         return true;
     }
 
     @Override
     public boolean visit(SynchronizedStatement node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_synchronized,
-                this.options.insert_space_after_opening_paren_in_synchronized);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_SYNCHRONIZED,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_SYNCHRONIZED);
         handleTokenBefore(node.getBody(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_synchronized, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_SYNCHRONIZED, null);
         return true;
     }
 
@@ -369,21 +379,21 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(TryStatement node) {
         List<VariableDeclarationExpression> resources = node.resources();
         if (!resources.isEmpty()) {
-            handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_try,
-                    this.options.insert_space_after_opening_paren_in_try);
-            handleTokenBefore(node.getBody(), TokenNameRPAREN, this.options.insert_space_before_closing_paren_in_try,
-                    false);
+            handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_TRY,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_TRY);
+            handleTokenBefore(node.getBody(), TokenNameRPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_TRY,
+                    null);
             for (int i = 1; i < resources.size(); i++) {
                 handleTokenBefore(resources.get(i), TokenNameSEMICOLON,
-                        this.options.insert_space_before_semicolon_in_try_resources,
-                        this.options.insert_space_after_semicolon_in_try_resources);
+                        DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON_IN_TRY_RESOURCES,
+                        DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_SEMICOLON_IN_TRY_RESOURCES);
             }
             // there can be a semicolon after the last resource
             int index = this.tm.firstIndexAfter(resources.get(resources.size() - 1), -1);
             while (index < this.tm.size()) {
                 Token token = this.tm.get(index++);
                 if (token.tokenType == TokenNameSEMICOLON) {
-                    handleToken(token, this.options.insert_space_before_semicolon_in_try_resources, false);
+                    handleToken(token, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON_IN_TRY_RESOURCES, null);
                 } else if (token.tokenType == TokenNameRPAREN) {
                     break;
                 }
@@ -394,19 +404,19 @@ public class SpacePreparator extends ASTVisitor {
 
     @Override
     public boolean visit(CatchClause node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_catch,
-                this.options.insert_space_after_opening_paren_in_catch);
-        handleTokenBefore(node.getBody(), TokenNameRPAREN, this.options.insert_space_before_closing_paren_in_catch,
-                false);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_CATCH,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_CATCH);
+        handleTokenBefore(node.getBody(), TokenNameRPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_CATCH,
+                null);
         return true;
     }
 
     @Override
     public boolean visit(AssertStatement node) {
-        this.tm.firstTokenIn(node, TokenNameassert).spaceAfter();
+        //this.tm.firstTokenIn(node, TokenNameassert).spaceAfter();
         if (node.getMessage() != null) {
-            handleTokenBefore(node.getMessage(), TokenNameCOLON, this.options.insert_space_before_colon_in_assert,
-                    this.options.insert_space_after_colon_in_assert);
+            handleTokenBefore(node.getMessage(), TokenNameCOLON, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_ASSERT,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COLON_IN_ASSERT);
         }
         return true;
     }
@@ -415,9 +425,8 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(ReturnStatement node) {
         if (node.getExpression() != null) {
             int returnTokenIndex = this.tm.firstIndexIn(node, TokenNamereturn);
-            if (!(node.getExpression() instanceof ParenthesizedExpression)
-                    || this.options.insert_space_before_parenthesized_expression_in_return) {
-                this.tm.get(returnTokenIndex).spaceAfter();
+            if ((node.getExpression() instanceof ParenthesizedExpression)) {
+                addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_RETURN, this.tm.get(returnTokenIndex).isSpaceAfter(), this.tm.get(returnTokenIndex));
             }
         }
         return true;
@@ -426,53 +435,52 @@ public class SpacePreparator extends ASTVisitor {
     @Override
     public boolean visit(ThrowStatement node) {
         int returnTokenIndex = this.tm.firstIndexIn(node, TokenNamethrow);
-        if (this.tm.get(returnTokenIndex + 1).tokenType != TokenNameLPAREN
-                || this.options.insert_space_before_parenthesized_expression_in_throw) {
-            this.tm.get(returnTokenIndex).spaceAfter();
+        if (this.tm.get(returnTokenIndex + 1).tokenType == TokenNameLPAREN) {
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_THROW, this.tm.get(returnTokenIndex).isSpaceAfter(), this.tm.get(returnTokenIndex));
         }
         return true;
     }
 
     @Override
     public boolean visit(LabeledStatement node) {
-        handleToken(node, TokenNameCOLON, this.options.insert_space_before_colon_in_labeled_statement,
-                this.options.insert_space_after_colon_in_labeled_statement);
+        handleToken(node, TokenNameCOLON, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_LABELED_STATEMENT,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COLON_IN_LABELED_STATEMENT);
         return true;
     }
 
     @Override
     public boolean visit(AnnotationTypeDeclaration node) {
-        handleToken(node, TokenNameAT, this.options.insert_space_before_at_in_annotation_type_declaration,
-                this.options.insert_space_after_at_in_annotation_type_declaration);
+        handleToken(node, TokenNameAT, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_AT_IN_ANNOTATION_TYPE_DECLARATION,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_AT_IN_ANNOTATION_TYPE_DECLARATION);
         handleToken(node.getName(), TokenNameLBRACE,
-                this.options.insert_space_before_opening_brace_in_annotation_type_declaration, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ANNOTATION_TYPE_DECLARATION, null);
         return true;
     }
 
     @Override
     public boolean visit(AnnotationTypeMemberDeclaration node) {
-        handleToken(node.getName(), TokenNameIdentifier, true, false);
+        handleToken(node.getName(), TokenNameIdentifier, null, null);
         handleToken(node.getName(), TokenNameLPAREN,
-                this.options.insert_space_before_opening_paren_in_annotation_type_member_declaration, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_ANNOTATION_TYPE_MEMBER_DECLARATION, null);
         handleEmptyParens(node.getName(),
-                this.options.insert_space_between_empty_parens_in_annotation_type_member_declaration);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_ANNOTATION_TYPE_MEMBER_DECLARATION);
         if (node.getDefault() != null)
-            handleTokenBefore(node.getDefault(), TokenNamedefault, true, true);
+            handleTokenBefore(node.getDefault(), TokenNamedefault, null, null);
         return true;
     }
 
     @Override
     public boolean visit(NormalAnnotation node) {
         handleAnnotation(node, true);
-        handleCommas(node.values(), this.options.insert_space_before_comma_in_annotation,
-                this.options.insert_space_after_comma_in_annotation);
+        handleCommas(node.values(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ANNOTATION,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ANNOTATION);
         return true;
     }
 
     @Override
     public boolean visit(MemberValuePair node) {
-        handleToken(node, TokenNameEQUAL, this.options.insert_space_before_assignment_operator,
-                this.options.insert_space_after_assignment_operator);
+        handleToken(node, TokenNameEQUAL, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ASSIGNMENT_OPERATOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ASSIGNMENT_OPERATOR);
         return true;
     }
 
@@ -489,12 +497,11 @@ public class SpacePreparator extends ASTVisitor {
     }
 
     private void handleAnnotation(Annotation node, boolean handleParenthesis) {
-        handleToken(node, TokenNameAT, false, this.options.insert_space_after_at_in_annotation);
+        handleToken(node, TokenNameAT, null, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_AT_IN_ANNOTATION);
         if (handleParenthesis) {
-            handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_annotation,
-                    this.options.insert_space_after_opening_paren_in_annotation);
-            if (this.options.insert_space_before_closing_paren_in_annotation)
-                this.tm.lastTokenIn(node, TokenNameRPAREN).spaceBefore();
+            handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_ANNOTATION,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ANNOTATION);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_ANNOTATION, this.tm.lastTokenIn(node, TokenNameRPAREN).isSpaceBefore(), this.tm.lastTokenIn(node, TokenNameRPAREN));
         }
 
         ASTNode parent = node.getParent();
@@ -508,23 +515,23 @@ public class SpacePreparator extends ASTVisitor {
 
     @Override
     public boolean visit(LambdaExpression node) {
-        handleToken(node, TokenNameARROW, this.options.insert_space_before_lambda_arrow,
-                this.options.insert_space_after_lambda_arrow);
+        handleToken(node, TokenNameARROW, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_LAMBDA_ARROW,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_LAMBDA_ARROW);
         List<VariableDeclaration> parameters = node.parameters();
         if (node.hasParentheses()) {
-            if (handleEmptyParens(node, this.options.insert_space_between_empty_parens_in_method_declaration)) {
+            if (handleEmptyParens(node, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_METHOD_DECLARATION)) {
                 handleToken(node, TokenNameLPAREN,
-                        this.options.insert_space_before_opening_paren_in_method_declaration, false);
+                        DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_DECLARATION, null);
             } else {
                 handleToken(node, TokenNameLPAREN,
-                        this.options.insert_space_before_opening_paren_in_method_declaration,
-                        this.options.insert_space_after_opening_paren_in_method_declaration);
+                        DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_DECLARATION,
+                        DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_METHOD_DECLARATION);
 
                 handleTokenBefore(node.getBody(), TokenNameRPAREN,
-                        this.options.insert_space_before_closing_paren_in_method_declaration, false);
+                        DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_DECLARATION, null);
             }
-            handleCommas(parameters, this.options.insert_space_before_comma_in_method_declaration_parameters,
-                    this.options.insert_space_after_comma_in_method_declaration_parameters);
+            handleCommas(parameters, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_METHOD_DECLARATION_PARAMETERS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_DECLARATION_PARAMETERS);
         }
         return true;
     }
@@ -539,28 +546,27 @@ public class SpacePreparator extends ASTVisitor {
         if (parent instanceof MethodDeclaration)
             return true; // spaces handled in #visit(MethodDeclaration)
 
-        handleToken(node, TokenNameLBRACE, this.options.insert_space_before_opening_brace_in_block, false);
-        if (this.options.insert_space_after_closing_brace_in_block
-                && (parent instanceof Statement || parent instanceof CatchClause)) {
+        handleToken(node, TokenNameLBRACE, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK, null);
+        if (parent instanceof Statement || parent instanceof CatchClause) {
             int closeBraceIndex = this.tm.lastIndexIn(node, TokenNameRBRACE);
-            this.tm.get(closeBraceIndex).spaceAfter();
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK, this.tm.get(closeBraceIndex).isSpaceAfter(), this.tm.get(closeBraceIndex));
         }
         return true;
     }
 
     @Override
     public boolean visit(IfStatement node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_if,
-                this.options.insert_space_after_opening_paren_in_if);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_IF,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_IF);
 
         Statement thenStatement = node.getThenStatement();
         int closingParenIndex = this.tm.firstIndexBefore(thenStatement, TokenNameRPAREN);
-        handleToken(this.tm.get(closingParenIndex), this.options.insert_space_before_closing_paren_in_if,
+        handleToken(this.tm.get(closingParenIndex), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_IF,
 				/* space before then statement may be needed if it will stay on the same line */
-                !(thenStatement instanceof Block) && !this.tm.get(closingParenIndex + 1).isComment());
+                null);
 
         if (thenStatement instanceof Block && this.tm.isGuardClause((Block) thenStatement)) {
-            handleToken(thenStatement, TokenNameLBRACE, false, true);
+            handleToken(thenStatement, TokenNameLBRACE, null, null);
             this.tm.lastTokenIn(node, TokenNameRBRACE).spaceBefore();
         }
 
@@ -570,23 +576,23 @@ public class SpacePreparator extends ASTVisitor {
 
     @Override
     public boolean visit(ForStatement node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_for,
-                this.options.insert_space_after_opening_paren_in_for);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_FOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_FOR);
         handleTokenBefore(node.getBody(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_for, false);
-        handleCommas(node.initializers(), this.options.insert_space_before_comma_in_for_inits,
-                this.options.insert_space_after_comma_in_for_inits);
-        handleCommas(node.updaters(), this.options.insert_space_before_comma_in_for_increments,
-                this.options.insert_space_after_comma_in_for_increments);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_FOR, null);
+        handleCommas(node.initializers(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_FOR_INITS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_FOR_INITS);
+        handleCommas(node.updaters(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_FOR_INCREMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_FOR_INCREMENTS);
 
         boolean part1Empty = node.initializers().isEmpty();
         boolean part2Empty = node.getExpression() == null;
         boolean part3Empty = node.updaters().isEmpty();
-        handleToken(node, TokenNameSEMICOLON, this.options.insert_space_before_semicolon_in_for && !part1Empty,
-                this.options.insert_space_after_semicolon_in_for && !part2Empty);
+        handleToken(node, TokenNameSEMICOLON, !part1Empty ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON_IN_FOR : null,
+                !part2Empty ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_SEMICOLON_IN_FOR : null);
         handleTokenBefore(node.getBody(), TokenNameSEMICOLON,
-                this.options.insert_space_before_semicolon_in_for && !part2Empty,
-                this.options.insert_space_after_semicolon_in_for && !part3Empty);
+                !part2Empty ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON_IN_FOR : null,
+                !part3Empty ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_SEMICOLON_IN_FOR : null);
         return true;
     }
 
@@ -594,11 +600,11 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(VariableDeclarationExpression node) {
         ASTNode parent = node.getParent();
         if (parent instanceof ForStatement) {
-            handleCommas(node.fragments(), this.options.insert_space_before_comma_in_for_inits,
-                    this.options.insert_space_after_comma_in_for_inits);
+            handleCommas(node.fragments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_FOR_INITS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_FOR_INITS);
         } else if (parent instanceof ExpressionStatement) {
-            handleCommas(node.fragments(), this.options.insert_space_before_comma_in_multiple_local_declarations,
-                    this.options.insert_space_after_comma_in_multiple_local_declarations);
+            handleCommas(node.fragments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_MULTIPLE_LOCAL_DECLARATIONS,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_MULTIPLE_LOCAL_DECLARATIONS);
         }
         this.tm.firstTokenAfter(node.getType(), -1).spaceBefore();
         return true;
@@ -606,12 +612,12 @@ public class SpacePreparator extends ASTVisitor {
 
     @Override
     public boolean visit(EnhancedForStatement node) {
-        handleToken(node, TokenNameLPAREN, this.options.insert_space_before_opening_paren_in_for,
-                this.options.insert_space_after_opening_paren_in_for);
+        handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_FOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_FOR);
         handleTokenBefore(node.getBody(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_for, false);
-        handleTokenAfter(node.getParameter(), TokenNameCOLON, this.options.insert_space_before_colon_in_for,
-                this.options.insert_space_after_colon_in_for);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_FOR, null);
+        handleTokenAfter(node.getParameter(), TokenNameCOLON, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_FOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COLON_IN_FOR);
         return true;
     }
 
@@ -619,8 +625,8 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(MethodInvocation node) {
         handleTypeArguments(node.typeArguments());
         handleInvocation(node, node.getName());
-        handleCommas(node.arguments(), this.options.insert_space_before_comma_in_method_invocation_arguments,
-                this.options.insert_space_after_comma_in_method_invocation_arguments);
+        handleCommas(node.arguments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_METHOD_INVOCATION_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_INVOCATION_ARGUMENTS);
         return true;
     }
 
@@ -628,8 +634,8 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(SuperMethodInvocation node) {
         handleTypeArguments(node.typeArguments());
         handleInvocation(node, node.getName());
-        handleCommas(node.arguments(), this.options.insert_space_before_comma_in_method_invocation_arguments,
-                this.options.insert_space_after_comma_in_method_invocation_arguments);
+        handleCommas(node.arguments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_METHOD_INVOCATION_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_INVOCATION_ARGUMENTS);
         return true;
     }
 
@@ -639,10 +645,10 @@ public class SpacePreparator extends ASTVisitor {
         handleTypeArguments(typeArguments);
         handleInvocation(node, node.getType(), node.getAnonymousClassDeclaration());
         if (!typeArguments.isEmpty()) {
-            handleTokenBefore(typeArguments.get(0), TokenNamenew, false, true); // fix for: new<Integer>A<String>()
+            handleTokenBefore(typeArguments.get(0), TokenNamenew, null, null); // fix for: new<Integer>A<String>()
         }
-        handleCommas(node.arguments(), this.options.insert_space_before_comma_in_allocation_expression,
-                this.options.insert_space_after_comma_in_allocation_expression);
+        handleCommas(node.arguments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ALLOCATION_EXPRESSION,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ALLOCATION_EXPRESSION);
         return true;
     }
 
@@ -651,8 +657,8 @@ public class SpacePreparator extends ASTVisitor {
         handleTypeArguments(node.typeArguments());
         handleInvocation(node, node);
         handleCommas(node.arguments(),
-                this.options.insert_space_before_comma_in_explicit_constructor_call_arguments,
-                this.options.insert_space_after_comma_in_explicit_constructor_call_arguments);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS);
         return true;
     }
 
@@ -661,8 +667,8 @@ public class SpacePreparator extends ASTVisitor {
         handleTypeArguments(node.typeArguments());
         handleInvocation(node, node);
         handleCommas(node.arguments(),
-                this.options.insert_space_before_comma_in_explicit_constructor_call_arguments,
-                this.options.insert_space_after_comma_in_explicit_constructor_call_arguments);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_EXPLICIT_CONSTRUCTOR_CALL_ARGUMENTS);
         return true;
     }
 
@@ -673,39 +679,37 @@ public class SpacePreparator extends ASTVisitor {
     private void handleInvocation(ASTNode invocationNode, ASTNode nodeBeforeOpeningParen,
                                   ASTNode nodeAfterClosingParen) {
         if (handleEmptyParens(nodeBeforeOpeningParen,
-                this.options.insert_space_between_empty_parens_in_method_invocation)) {
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_METHOD_INVOCATION)) {
             handleToken(nodeBeforeOpeningParen, TokenNameLPAREN,
-                    this.options.insert_space_before_opening_paren_in_method_invocation, false);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_INVOCATION, null);
         } else {
             handleToken(nodeBeforeOpeningParen, TokenNameLPAREN,
-                    this.options.insert_space_before_opening_paren_in_method_invocation,
-                    this.options.insert_space_after_opening_paren_in_method_invocation);
-            if (this.options.insert_space_before_closing_paren_in_method_invocation) {
-                Token closingParen = nodeAfterClosingParen == null
-                        ? this.tm.lastTokenIn(invocationNode, TokenNameRPAREN)
-                        : this.tm.firstTokenBefore(nodeAfterClosingParen, TokenNameRPAREN);
-                closingParen.spaceBefore();
-            }
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_INVOCATION,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_METHOD_INVOCATION);
+            Token closingParen = nodeAfterClosingParen == null
+                    ? this.tm.lastTokenIn(invocationNode, TokenNameRPAREN)
+                    : this.tm.firstTokenBefore(nodeAfterClosingParen, TokenNameRPAREN);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_INVOCATION, closingParen.isSpaceBefore(), closingParen);
         }
     }
 
     @Override
     public boolean visit(Assignment node) {
         handleOperator(node.getOperator().toString(), node.getRightHandSide(),
-                this.options.insert_space_before_assignment_operator,
-                this.options.insert_space_after_assignment_operator);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ASSIGNMENT_OPERATOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ASSIGNMENT_OPERATOR);
         return true;
     }
 
     @Override
     public boolean visit(InfixExpression node) {
         String operator = node.getOperator().toString();
-        handleOperator(operator, node.getRightOperand(), this.options.insert_space_before_binary_operator,
-                this.options.insert_space_after_binary_operator);
+        handleOperator(operator, node.getRightOperand(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_BINARY_OPERATOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_BINARY_OPERATOR);
         List<Expression> extendedOperands = node.extendedOperands();
         for (Expression operand : extendedOperands) {
-            handleOperator(operator, operand, this.options.insert_space_before_binary_operator,
-                    this.options.insert_space_after_binary_operator);
+            handleOperator(operator, operand, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_BINARY_OPERATOR,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_BINARY_OPERATOR);
         }
         return true;
     }
@@ -715,31 +719,29 @@ public class SpacePreparator extends ASTVisitor {
         Operator operator = node.getOperator();
         if (operator.equals(Operator.INCREMENT) || operator.equals(Operator.DECREMENT)) {
             handleOperator(operator.toString(), node.getOperand(),
-                    this.options.insert_space_before_prefix_operator,
-                    this.options.insert_space_after_prefix_operator);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PREFIX_OPERATOR,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_PREFIX_OPERATOR);
         } else {
-            handleOperator(operator.toString(), node.getOperand(), this.options.insert_space_before_unary_operator,
-                    this.options.insert_space_after_unary_operator);
+            handleOperator(operator.toString(), node.getOperand(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_UNARY_OPERATOR,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_UNARY_OPERATOR);
         }
         return true;
     }
 
     @Override
     public boolean visit(PostfixExpression node) {
-        if (this.options.insert_space_before_postfix_operator || this.options.insert_space_after_postfix_operator) {
-            String operator = node.getOperator().toString();
-            int i = this.tm.firstIndexAfter(node.getOperand(), -1);
-            while (!operator.equals(this.tm.toString(i))) {
-                i++;
-            }
-            handleToken(this.tm.get(i), this.options.insert_space_before_postfix_operator,
-                    this.options.insert_space_after_postfix_operator);
+        String operator = node.getOperator().toString();
+        int i = this.tm.firstIndexAfter(node.getOperand(), -1);
+        while (!operator.equals(this.tm.toString(i))) {
+            i++;
         }
+        handleToken(this.tm.get(i), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_POSTFIX_OPERATOR,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_POSTFIX_OPERATOR);
         return true;
     }
 
-    private void handleOperator(String operator, ASTNode nodeAfter, boolean spaceBefore, boolean spaceAfter) {
-        if (spaceBefore || spaceAfter) {
+    private void handleOperator(String operator, ASTNode nodeAfter, String spaceBefore, String spaceAfter) {
+        if (spaceBefore != null || spaceAfter != null) {
             int i = this.tm.firstIndexBefore(nodeAfter, -1);
             while (!operator.equals(this.tm.toString(i))) {
                 i--;
@@ -751,19 +753,19 @@ public class SpacePreparator extends ASTVisitor {
     @Override
     public boolean visit(ParenthesizedExpression node) {
         handleToken(node, TokenNameLPAREN,
-                this.options.insert_space_before_opening_paren_in_parenthesized_expression,
-                this.options.insert_space_after_opening_paren_in_parenthesized_expression);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_PARENTHESIZED_EXPRESSION,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_PARENTHESIZED_EXPRESSION);
         handleTokenAfter(node.getExpression(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_parenthesized_expression, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_PARENTHESIZED_EXPRESSION, null);
         return true;
     }
 
     @Override
     public boolean visit(CastExpression node) {
-        handleToken(node, TokenNameLPAREN, false, this.options.insert_space_after_opening_paren_in_cast);
+        handleToken(node, TokenNameLPAREN, null, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_CAST);
         handleTokenBefore(node.getExpression(), TokenNameRPAREN,
-                this.options.insert_space_before_closing_paren_in_cast,
-                this.options.insert_space_after_closing_paren_in_cast);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_CAST,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_PAREN_IN_CAST);
         return true;
     }
 
@@ -771,36 +773,36 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(IntersectionType node) {
         List<Type> types = node.types();
         for (int i = 1; i < types.size(); i++)
-            handleTokenBefore(types.get(i), TokenNameAND, this.options.insert_space_before_binary_operator,
-                    this.options.insert_space_after_binary_operator);
+            handleTokenBefore(types.get(i), TokenNameAND, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_BINARY_OPERATOR,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_BINARY_OPERATOR);
         return true;
     }
 
     @Override
     public boolean visit(ConditionalExpression node) {
         handleTokenBefore(node.getThenExpression(), TokenNameQUESTION,
-                this.options.insert_space_before_question_in_conditional,
-                this.options.insert_space_after_question_in_conditional);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_QUESTION_IN_CONDITIONAL,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_QUESTION_IN_CONDITIONAL);
         handleTokenBefore(node.getElseExpression(), TokenNameCOLON,
-                this.options.insert_space_before_colon_in_conditional,
-                this.options.insert_space_after_colon_in_conditional);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_CONDITIONAL,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COLON_IN_CONDITIONAL);
         return true;
     }
 
     @Override
     public boolean visit(ArrayType node) {
         ASTNode parent = node.getParent();
-        boolean spaceBeofreOpening, spaceBetween;
+        String spaceBeofreOpening, spaceBetween;
         if (parent instanceof ArrayCreation) {
-            spaceBeofreOpening = this.options.insert_space_before_opening_bracket_in_array_allocation_expression;
-            spaceBetween = this.options.insert_space_between_empty_brackets_in_array_allocation_expression;
+            spaceBeofreOpening = DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION;
+            spaceBetween = DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_BRACKETS_IN_ARRAY_ALLOCATION_EXPRESSION;
         } else {
-            spaceBeofreOpening = this.options.insert_space_before_opening_bracket_in_array_type_reference;
-            spaceBetween = this.options.insert_space_between_brackets_in_array_type_reference;
+            spaceBeofreOpening = DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACKET_IN_ARRAY_TYPE_REFERENCE;
+            spaceBetween = DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_BRACKETS_IN_ARRAY_TYPE_REFERENCE;
         }
         List<Dimension> dimensions = node.dimensions();
         for (Dimension dimension : dimensions) {
-            handleToken(dimension, TokenNameLBRACKET, spaceBeofreOpening, false);
+            handleToken(dimension, TokenNameLBRACKET, spaceBeofreOpening, null);
             handleEmptyBrackets(dimension, spaceBetween);
         }
         return true;
@@ -809,10 +811,10 @@ public class SpacePreparator extends ASTVisitor {
     @Override
     public boolean visit(ArrayAccess node) {
         handleTokenBefore(node.getIndex(), TokenNameLBRACKET,
-                this.options.insert_space_before_opening_bracket_in_array_reference,
-                this.options.insert_space_after_opening_bracket_in_array_reference);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACKET_IN_ARRAY_REFERENCE,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_BRACKET_IN_ARRAY_REFERENCE);
         handleTokenAfter(node.getIndex(), TokenNameRBRACKET,
-                this.options.insert_space_before_closing_bracket_in_array_reference, false);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_BRACKET_IN_ARRAY_REFERENCE, null);
         return true;
     }
 
@@ -820,10 +822,10 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(ArrayCreation node) {
         List<Expression> dimensions = node.dimensions();
         for (Expression dimension : dimensions) {
-            handleTokenBefore(dimension, TokenNameLBRACKET, false,
-                    this.options.insert_space_after_opening_bracket_in_array_allocation_expression);
+            handleTokenBefore(dimension, TokenNameLBRACKET, null,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION);
             handleTokenAfter(dimension, TokenNameRBRACKET,
-                    this.options.insert_space_before_closing_bracket_in_array_allocation_expression, false);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_BRACKET_IN_ARRAY_ALLOCATION_EXPRESSION, null);
         }
         return true;
     }
@@ -835,27 +837,23 @@ public class SpacePreparator extends ASTVisitor {
         Token lastToken = this.tm.get(closingBraceIndex - 1);
         if (lastToken.tokenType == TokenNameLBRACE) {
             handleToken(this.tm.get(openingBraceIndex),
-                    this.options.insert_space_before_opening_brace_in_array_initializer
-                            && !(node.getParent() instanceof ArrayInitializer)
-                            && !(node.getParent() instanceof SingleMemberAnnotation),
-                    this.options.insert_space_between_empty_braces_in_array_initializer);
+                    !(node.getParent() instanceof ArrayInitializer) && !(node.getParent() instanceof SingleMemberAnnotation)
+                            ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ARRAY_INITIALIZER : null,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_BRACES_IN_ARRAY_INITIALIZER);
         } else {
             boolean endsWithComma = lastToken.tokenType == TokenNameCOMMA;
             handleToken(this.tm.get(openingBraceIndex),
-                    this.options.insert_space_before_opening_brace_in_array_initializer
-                            && !(node.getParent() instanceof ArrayInitializer)
-                            && !(node.getParent() instanceof SingleMemberAnnotation),
-                    this.options.insert_space_after_opening_brace_in_array_initializer
-                            && !(endsWithComma && node.expressions().isEmpty()));
-            handleCommas(node.expressions(), this.options.insert_space_before_comma_in_array_initializer,
-                    this.options.insert_space_after_comma_in_array_initializer);
+                    !(node.getParent() instanceof ArrayInitializer) && !(node.getParent() instanceof SingleMemberAnnotation) ?
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_ARRAY_INITIALIZER : null,
+                    !(endsWithComma && node.expressions().isEmpty()) ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_BRACE_IN_ARRAY_INITIALIZER : null);
+            handleCommas(node.expressions(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ARRAY_INITIALIZER,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ARRAY_INITIALIZER);
             if (endsWithComma) {
-                handleToken(lastToken, this.options.insert_space_before_comma_in_array_initializer,
-                        false); //this.options.insert_space_after_comma_in_array_initializer);
+                handleToken(lastToken, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ARRAY_INITIALIZER,
+                        null); //DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ARRAY_INITIALIZER);
             }
             handleToken(this.tm.get(closingBraceIndex),
-                    this.options.insert_space_before_closing_brace_in_array_initializer
-                            && !(endsWithComma && node.expressions().isEmpty()), false);
+                    !(endsWithComma && node.expressions().isEmpty()) ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_BRACE_IN_ARRAY_INITIALIZER : null, null);
         }
         return true;
     }
@@ -865,14 +863,14 @@ public class SpacePreparator extends ASTVisitor {
         List<Type> typeArguments = node.typeArguments();
         boolean hasArguments = !typeArguments.isEmpty();
         handleTokenAfter(node.getType(), TokenNameLESS,
-                this.options.insert_space_before_opening_angle_bracket_in_parameterized_type_reference,
-                hasArguments && this.options.insert_space_after_opening_angle_bracket_in_parameterized_type_reference);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_PARAMETERIZED_TYPE_REFERENCE,
+                hasArguments ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_PARAMETERIZED_TYPE_REFERENCE : null);
         if (hasArguments) {
             handleTokenAfter(typeArguments.get(typeArguments.size() - 1), TokenNameGREATER,
-                    this.options.insert_space_before_closing_angle_bracket_in_parameterized_type_reference, false);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_PARAMETERIZED_TYPE_REFERENCE, null);
             handleCommas(node.typeArguments(),
-                    this.options.insert_space_before_comma_in_parameterized_type_reference,
-                    this.options.insert_space_after_comma_in_parameterized_type_reference);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_PARAMETERIZED_TYPE_REFERENCE,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_PARAMETERIZED_TYPE_REFERENCE);
         }
         return true;
     }
@@ -882,16 +880,16 @@ public class SpacePreparator extends ASTVisitor {
         List<Type> typeBounds = node.typeBounds();
         for (int i = 1; i < typeBounds.size(); i++) {
             handleTokenBefore(typeBounds.get(i), TokenNameAND,
-                    this.options.insert_space_before_and_in_type_parameter,
-                    this.options.insert_space_after_and_in_type_parameter);
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_AND_IN_TYPE_PARAMETER,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_AND_IN_TYPE_PARAMETER);
         }
         return true;
     }
 
     @Override
     public boolean visit(WildcardType node) {
-        handleToken(node, TokenNameQUESTION, this.options.insert_space_before_question_in_wilcard,
-                this.options.insert_space_after_question_in_wilcard || node.getBound() != null);
+        handleToken(node, TokenNameQUESTION, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_QUESTION_IN_WILDCARD,
+                node.getBound() != null ? null : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_QUESTION_IN_WILDCARD);
         return true;
     }
 
@@ -899,8 +897,8 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(UnionType node) {
         List<Type> types = node.types();
         for (int i = 1; i < types.size(); i++)
-            handleTokenBefore(types.get(i), TokenNameOR, this.options.insert_space_before_binary_operator,
-                    this.options.insert_space_after_binary_operator);
+            handleTokenBefore(types.get(i), TokenNameOR, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_BINARY_OPERATOR,
+                    DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_BINARY_OPERATOR);
         return true;
     }
 
@@ -908,7 +906,7 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(Dimension node) {
         List<Annotation> annotations = node.annotations();
         if (!annotations.isEmpty())
-            handleToken(annotations.get(0), TokenNameAT, true, false);
+            handleToken(annotations.get(0), TokenNameAT, null, null);
         return true;
     }
 
@@ -940,46 +938,46 @@ public class SpacePreparator extends ASTVisitor {
         if (typeArguments.isEmpty())
             return;
         handleTokenBefore(typeArguments.get(0), TokenNameLESS,
-                this.options.insert_space_before_opening_angle_bracket_in_type_arguments,
-                this.options.insert_space_after_opening_angle_bracket_in_type_arguments);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS);
         handleTokenAfter(typeArguments.get(typeArguments.size() - 1), TokenNameGREATER,
-                this.options.insert_space_before_closing_angle_bracket_in_type_arguments,
-                this.options.insert_space_after_closing_angle_bracket_in_type_arguments);
-        handleCommas(typeArguments, this.options.insert_space_before_comma_in_type_arguments,
-                this.options.insert_space_after_comma_in_type_arguments);
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENTS);
+        handleCommas(typeArguments, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_TYPE_ARGUMENTS,
+                DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
     }
 
     @Override
     public boolean visit(InstanceofExpression node) {
-        handleTokenAfter(node.getLeftOperand(), TokenNameinstanceof, true, true);
+        handleTokenAfter(node.getLeftOperand(), TokenNameinstanceof, null, null);
         return true;
     }
 
-    private void handleCommas(List<? extends ASTNode> nodes, boolean spaceBefore, boolean spaceAfter) {
-        if (spaceBefore || spaceAfter) {
+    private void handleCommas(List<? extends ASTNode> nodes, String spaceBefore, String spaceAfter) {
+        if (spaceBefore != null || spaceAfter != null) {
             for (int i = 1; i < nodes.size(); i++) {
                 handleTokenBefore(nodes.get(i), TokenNameCOMMA, spaceBefore, spaceAfter);
             }
         }
     }
 
-    private void handleToken(ASTNode node, int tokenType, boolean spaceBefore, boolean spaceAfter) {
-        if (spaceBefore || spaceAfter) {
+    private void handleToken(ASTNode node, int tokenType, String spaceBefore, String spaceAfter) {
+        if (spaceBefore != null || spaceAfter != null) {
             Token token = this.tm.get(this.tm.findIndex(node.getStartPosition(), tokenType, true));
             // ^not the same as "firstTokenIn(node, tokenType)" - do not assert the token is inside the node
             handleToken(token, spaceBefore, spaceAfter);
         }
     }
 
-    private void handleTokenBefore(ASTNode node, int tokenType, boolean spaceBefore, boolean spaceAfter) {
-        if (spaceBefore || spaceAfter) {
+    private void handleTokenBefore(ASTNode node, int tokenType, String spaceBefore, String spaceAfter) {
+        if (spaceBefore != null || spaceAfter != null) {
             Token token = this.tm.firstTokenBefore(node, tokenType);
             handleToken(token, spaceBefore, spaceAfter);
         }
     }
 
-    private void handleTokenAfter(ASTNode node, int tokenType, boolean spaceBefore, boolean spaceAfter) {
-        if (spaceBefore || spaceAfter) {
+    private void handleTokenAfter(ASTNode node, int tokenType, String spaceBefore, String spaceAfter) {
+        if (spaceBefore != null || spaceAfter != null) {
             if (tokenType == TokenNameGREATER) {
                 // there could be ">>" or ">>>" instead, get rid of them
                 int index = this.tm.lastIndexIn(node, -1);
@@ -999,73 +997,41 @@ public class SpacePreparator extends ASTVisitor {
         }
     }
 
-    private void handleToken(Token token, boolean spaceBefore, boolean spaceAfter) {
-        if (spaceBefore)
-            token.spaceBefore();
-        if (spaceAfter)
-            token.spaceAfter();
+    private void handleToken(@NotNull Token token, @Nullable String spaceBefore, @Nullable String spaceAfter) {
+        if (spaceBefore != null) {
+            addFeature(spaceBefore, token.isSpaceBefore(), token);
+        }
+        if (spaceAfter != null) {
+            addFeature(spaceAfter, token.isSpaceAfter(), token);
+        }
     }
 
-    private boolean handleEmptyParens(ASTNode nodeBeforeParens, boolean insertSpace) {
+    private boolean handleEmptyParens(ASTNode nodeBeforeParens, String insertSpace) {
         int openingIndex = this.tm.findIndex(nodeBeforeParens.getStartPosition(), TokenNameLPAREN, true);
         if (this.tm.get(openingIndex + 1).tokenType == TokenNameRPAREN) {
-            if (insertSpace)
-                this.tm.get(openingIndex).spaceAfter();
+            addFeature(insertSpace, this.tm.get(openingIndex).isSpaceAfter(), this.tm.get(openingIndex));
             return true;
         }
         return false;
     }
 
-    private boolean handleEmptyBrackets(ASTNode nodeContainingBrackets, boolean insertSpace) {
+    private boolean handleEmptyBrackets(ASTNode nodeContainingBrackets, String insertSpace) {
         int openingIndex = this.tm.firstIndexIn(nodeContainingBrackets, TokenNameLBRACKET);
         if (this.tm.get(openingIndex + 1).tokenType == TokenNameRBRACKET) {
-            if (insertSpace)
-                this.tm.get(openingIndex).spaceAfter();
+            addFeature(insertSpace, this.tm.get(openingIndex).isSpaceAfter(), this.tm.get(openingIndex));
             return true;
         }
         return false;
     }
 
     private void handleSemicolon(ASTNode node) {
-        if (this.options.insert_space_before_semicolon) {
-            Token lastToken = this.tm.lastTokenIn(node, -1);
-            if (lastToken.tokenType == TokenNameSEMICOLON)
-                lastToken.spaceBefore();
-        }
+        Token lastToken = this.tm.lastTokenIn(node, -1);
+        if (lastToken.tokenType == TokenNameSEMICOLON)
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON, lastToken.isSpaceBefore(), lastToken);
     }
 
     private void handleSemicolon(List<ASTNode> nodes) {
-        if (this.options.insert_space_before_semicolon) {
-            for (ASTNode node : nodes)
-                handleSemicolon(node);
-        }
-    }
-
-    public void finishUp() {
-        this.tm.traverse(0, new TokenTraverser() {
-            boolean isPreviousJIDP = false;
-
-            @Override
-            protected boolean token(Token token, int index) {
-                // put space between consecutive keywords, numbers or identifiers
-                char c = SpacePreparator.this.tm.charAt(token.originalStart);
-                boolean isJIDP = ScannerHelper.isJavaIdentifierPart(c);
-                if ((isJIDP || c == '@') && this.isPreviousJIDP)
-                    getPrevious().spaceAfter();
-                this.isPreviousJIDP = isJIDP;
-
-                switch (token.tokenType) {
-                    case TokenNamePLUS:
-                        if (getNext().tokenType == TokenNamePLUS || getNext().tokenType == TokenNamePLUS_PLUS)
-                            token.spaceAfter();
-                        break;
-                    case TokenNameMINUS:
-                        if (getNext().tokenType == TokenNameMINUS || getNext().tokenType == TokenNameMINUS_MINUS)
-                            token.spaceAfter();
-                        break;
-                }
-                return true;
-            }
-        });
+        for (ASTNode node : nodes)
+            handleSemicolon(node);
     }
 }
