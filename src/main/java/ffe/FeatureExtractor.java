@@ -56,10 +56,10 @@ public class FeatureExtractor {
                     token.spaceBefore();
                 }
             }
-            if (token.originalEnd == sourceArray.length) {
+            if (token.originalEnd + 1 >= sourceArray.length) {
                 token.spaceAfter();
             } else {
-                if (Character.isSpaceChar(sourceArray[token.originalEnd])) {
+                if (Character.isSpaceChar(sourceArray[token.originalEnd + 1])) {
                     token.spaceAfter();
                 }
             }

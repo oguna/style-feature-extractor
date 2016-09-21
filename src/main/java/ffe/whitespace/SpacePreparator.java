@@ -35,8 +35,8 @@ public class SpacePreparator extends ASTVisitor {
         this.features = new ArrayList<>();
     }
 
-    private void addFeature(String format, boolean space, Token token) {
-        Direction direction = format.contains("before") ? Direction.BEFORE : Direction.AFTER;
+    private void addFeature(String format, Direction direction, Token token) {
+        boolean space = direction == Direction.BEFORE ? token.isSpaceBefore() : token.isSpaceAfter();
         WhiteSpaceOption option = space ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
         features.add(new WhiteSpaceFormatFeature(format, option, token));
     }
@@ -98,8 +98,8 @@ public class SpacePreparator extends ASTVisitor {
         Token openingParen = null;
         if (!arguments.isEmpty()) {
             openingParen = this.tm.firstTokenIn(node, TokenNameLPAREN);
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ENUM_CONSTANT, openingParen.isSpaceAfter(), openingParen);
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ENUM_CONSTANT, openingParen.isSpaceAfter(), openingParen);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ENUM_CONSTANT, Direction.AFTER, openingParen);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ENUM_CONSTANT, Direction.AFTER, openingParen);
             handleTokenAfter(arguments.get(arguments.size() - 1), TokenNameRPAREN,
                     DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_ENUM_CONSTANT, null);
         } else {
@@ -111,13 +111,13 @@ public class SpacePreparator extends ASTVisitor {
             for (int i = from; i <= to; i++) {
                 if (this.tm.get(i).tokenType == TokenNameLPAREN) {
                     openingParen = this.tm.get(i);
-                    addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_ENUM_CONSTANT, openingParen.isSpaceAfter(), openingParen);
+                    addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BETWEEN_EMPTY_PARENS_IN_ENUM_CONSTANT,Direction.AFTER, openingParen);
                     break;
                 }
             }
         }
         if (openingParen != null) {
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_ENUM_CONSTANT, openingParen.isSpaceBefore(), openingParen);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_ENUM_CONSTANT, Direction.BEFORE, openingParen);
         }
         handleCommas(arguments, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_ENUM_CONSTANT_ARGUMENTS,
                 DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_ENUM_CONSTANT_ARGUMENTS);
@@ -162,8 +162,7 @@ public class SpacePreparator extends ASTVisitor {
         if (node.getBody() != null) {
             String featureName = node.isConstructor() ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_CONSTRUCTOR_DECLARATION
                     : DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_METHOD_DECLARATION;
-            boolean hasSpace = this.tm.firstTokenIn(node.getBody(), TokenNameLBRACE).isSpaceBefore();
-            addFeature(featureName, hasSpace, this.tm.firstTokenIn(node.getBody(), TokenNameLBRACE));
+            addFeature(featureName, Direction.BEFORE, this.tm.firstTokenIn(node.getBody(), TokenNameLBRACE));
         }
 
         String beforeComma = node.isConstructor()
@@ -357,7 +356,7 @@ public class SpacePreparator extends ASTVisitor {
         if (node.getExpression() != null) {
             int returnTokenIndex = this.tm.firstIndexIn(node, TokenNamereturn);
             if ((node.getExpression() instanceof ParenthesizedExpression)) {
-                addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_RETURN, this.tm.get(returnTokenIndex).isSpaceAfter(), this.tm.get(returnTokenIndex));
+                addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_RETURN, Direction.AFTER, this.tm.get(returnTokenIndex));
             }
         }
         return true;
@@ -367,7 +366,7 @@ public class SpacePreparator extends ASTVisitor {
     public boolean visit(ThrowStatement node) {
         int returnTokenIndex = this.tm.firstIndexIn(node, TokenNamethrow);
         if (this.tm.get(returnTokenIndex + 1).tokenType == TokenNameLPAREN) {
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_THROW, this.tm.get(returnTokenIndex).isSpaceAfter(), this.tm.get(returnTokenIndex));
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PARENTHESIZED_EXPRESSION_IN_THROW, Direction.AFTER, this.tm.get(returnTokenIndex));
         }
         return true;
     }
@@ -432,7 +431,7 @@ public class SpacePreparator extends ASTVisitor {
         if (handleParenthesis) {
             handleToken(node, TokenNameLPAREN, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_ANNOTATION,
                     DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_ANNOTATION);
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_ANNOTATION, this.tm.lastTokenIn(node, TokenNameRPAREN).isSpaceBefore(), this.tm.lastTokenIn(node, TokenNameRPAREN));
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_ANNOTATION, Direction.BEFORE, this.tm.lastTokenIn(node, TokenNameRPAREN));
         }
 
         ASTNode parent = node.getParent();
@@ -480,7 +479,7 @@ public class SpacePreparator extends ASTVisitor {
         handleToken(node, TokenNameLBRACE, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK, null);
         if (parent instanceof Statement || parent instanceof CatchClause) {
             int closeBraceIndex = this.tm.lastIndexIn(node, TokenNameRBRACE);
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK, this.tm.get(closeBraceIndex).isSpaceAfter(), this.tm.get(closeBraceIndex));
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK, Direction.AFTER, this.tm.get(closeBraceIndex));
         }
         return true;
     }
@@ -620,7 +619,7 @@ public class SpacePreparator extends ASTVisitor {
             Token closingParen = nodeAfterClosingParen == null
                     ? this.tm.lastTokenIn(invocationNode, TokenNameRPAREN)
                     : this.tm.firstTokenBefore(nodeAfterClosingParen, TokenNameRPAREN);
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_INVOCATION, closingParen.isSpaceBefore(), closingParen);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_INVOCATION, Direction.BEFORE, closingParen);
         }
     }
 
@@ -930,17 +929,17 @@ public class SpacePreparator extends ASTVisitor {
 
     private void handleToken(@NotNull Token token, @Nullable String spaceBefore, @Nullable String spaceAfter) {
         if (spaceBefore != null) {
-            addFeature(spaceBefore, token.isSpaceBefore(), token);
+            addFeature(spaceBefore, Direction.BEFORE, token);
         }
         if (spaceAfter != null) {
-            addFeature(spaceAfter, token.isSpaceAfter(), token);
+            addFeature(spaceAfter, Direction.AFTER, token);
         }
     }
 
     private boolean handleEmptyParens(ASTNode nodeBeforeParens, String insertSpace) {
         int openingIndex = this.tm.findIndex(nodeBeforeParens.getStartPosition(), TokenNameLPAREN, true);
         if (this.tm.get(openingIndex + 1).tokenType == TokenNameRPAREN) {
-            addFeature(insertSpace, this.tm.get(openingIndex).isSpaceAfter(), this.tm.get(openingIndex));
+            addFeature(insertSpace, Direction.AFTER, this.tm.get(openingIndex));
             return true;
         }
         return false;
@@ -949,7 +948,7 @@ public class SpacePreparator extends ASTVisitor {
     private boolean handleEmptyBrackets(ASTNode nodeContainingBrackets, String insertSpace) {
         int openingIndex = this.tm.firstIndexIn(nodeContainingBrackets, TokenNameLBRACKET);
         if (this.tm.get(openingIndex + 1).tokenType == TokenNameRBRACKET) {
-            addFeature(insertSpace, this.tm.get(openingIndex).isSpaceAfter(), this.tm.get(openingIndex));
+            addFeature(insertSpace, Direction.AFTER, this.tm.get(openingIndex));
             return true;
         }
         return false;
@@ -958,7 +957,7 @@ public class SpacePreparator extends ASTVisitor {
     private void handleSemicolon(ASTNode node) {
         Token lastToken = this.tm.lastTokenIn(node, -1);
         if (lastToken.tokenType == TokenNameSEMICOLON)
-            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON, lastToken.isSpaceBefore(), lastToken);
+            addFeature(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_SEMICOLON, Direction.BEFORE, lastToken);
     }
 
     private void handleSemicolon(List<ASTNode> nodes) {
