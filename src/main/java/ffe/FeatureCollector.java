@@ -28,9 +28,9 @@ public class FeatureCollector {
     }
 
     private static String formatLine(WhiteSpaceFormatFeature feature) {
-        return String.valueOf(feature.token.position) +
+        return feature.token.originalStart +
                 ',' +
-                feature.token.length +
+                feature.token.originalEnd +
                 ',' +
                 feature.format.substring(formatterPrefixSize) +
                 ',' +

@@ -52,13 +52,14 @@ public class MainWindowController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         attributeColumn.setCellValueFactory(e -> new SimpleStringProperty(e.getValue().format.substring(31)));
-        positionColumn.setCellValueFactory(e -> new SimpleStringProperty(manager.getPositionDescription(e.getValue().token.position)));
+        positionColumn.setCellValueFactory(e -> new SimpleStringProperty(manager.getPositionDescription(e.getValue().token.originalStart)));
         tokenColumn.setCellValueFactory(e -> new SimpleStringProperty(manager.getToken(e.getValue().token)));
         valueColumn.setCellValueFactory(e -> new SimpleStringProperty(e.getValue().value.toString()));
         tableView.getSelectionModel().selectedItemProperty().addListener((observableValue, oldValue, newValue) -> {
             if (newValue != null) {
-                int offset = manager.calculateCodeAreaPosition(newValue.token.position);
-                textArea.getContent().selectRange(offset, offset + newValue.token.length);
+                int offset = manager.calculateCodeAreaPosition(newValue.token.originalStart);
+                int length = newValue.token.originalEnd - newValue.token.originalStart + 1;
+                textArea.getContent().selectRange(offset, offset + length);
             }
         });
         tableView.setItems(manager.features);

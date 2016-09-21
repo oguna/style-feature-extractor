@@ -1,6 +1,6 @@
 package ffe.whitespace;
 
-import ffe.Token;
+import ffe.token.Token;
 
 public class WhiteSpaceFormatFeature {
     public final String format;
@@ -17,6 +17,6 @@ public class WhiteSpaceFormatFeature {
 
     @Override
     public String toString() {
-        return token.position + " : " +format + " = "+value;
+        return token.originalStart + " : " + format + " = " + value;
     }
 }

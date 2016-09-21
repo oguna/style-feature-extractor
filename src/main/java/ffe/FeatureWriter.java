@@ -21,7 +21,7 @@ public class FeatureWriter implements Closeable {
     }
 
     public String format(WhiteSpaceFormatFeature feature) {
-        return feature.token.position + ", " + feature.token.length + ", " + feature.format + ", " + feature.value;
+        return feature.token.originalStart + ", " + feature.token.originalEnd + ", " + feature.format + ", " + feature.value;
     }
 
     @Override

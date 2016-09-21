@@ -1,13 +1,10 @@
 package ffe.gui;
 
 import ffe.FeatureWriter;
-import ffe.Token;
-import ffe.FeatureCollector;
-import ffe.TokenSequence;
+import ffe.token.Token;
 import ffe.token.TokenManager;
 import ffe.whitespace.SpacePreparator;
 import ffe.whitespace.WhiteSpaceFormatFeature;
-import ffe.whitespace.WhiteSpaceVisitor;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -91,7 +88,7 @@ public class SourceCodeManager {
     }
 
     public String getToken(Token token) {
-        return text.getValue().substring(token.position, token.position + token.length);
+        return text.getValue().substring(token.originalStart, token.originalEnd + 1);
     }
 
     private static int getStartPosition(int line, String text) {
@@ -118,7 +115,7 @@ public class SourceCodeManager {
         SpacePreparator visitor = new SpacePreparator(manager);
         unit.accept(visitor);
         List<WhiteSpaceFormatFeature> features = new ArrayList<>(visitor.features);
-        features.sort((a,b) -> a.token.position - b.token.position);
+        features.sort((a,b) -> a.token.originalStart - b.token.originalStart);
         this.scanner = getScanner(content);
         this.features.clear();
         this.features.addAll(features);
