@@ -38,7 +38,7 @@ public class SpacePreparator extends ASTVisitor {
     private void addFeature(String format, boolean space, Token token) {
         Direction direction = format.contains("before") ? Direction.BEFORE : Direction.AFTER;
         WhiteSpaceOption option = space ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
-        features.add(new WhiteSpaceFormatFeature(format, option, token, direction));
+        features.add(new WhiteSpaceFormatFeature(format, option, token));
     }
 
     @Override
