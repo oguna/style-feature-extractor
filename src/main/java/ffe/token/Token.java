@@ -163,6 +163,18 @@ public class Token {
         this.spaceAfter = true;
     }
 
+    public void spaceAfter(String feature) {
+        this.afterFeature = feature;
+    }
+
+    public String afterFeature;
+
+    public void spaceBefore(String feature) {
+        this.beforeFeature = feature;
+    }
+
+    public String beforeFeature;
+
     /** Removes space after this token */
     public void clearSpaceAfter() {
         this.spaceAfter = false;

@@ -30,6 +30,7 @@ public class FeatureExtractor {
         TokenManager manager = new TokenManager(tokens, content, DefaultCodeFormatterOptions.getDefaultSettings());
         SpacePreparator visitor = new SpacePreparator(manager);
         unit.accept(visitor);
+        visitor.finishUp();
         // detect space
         for (Token token : tokens) {
             token.clearSpaceBefore();
@@ -50,14 +51,20 @@ public class FeatureExtractor {
             }
         }
         // collect feature values
-        for (WhiteSpaceFormatFeature feature : visitor.features) {
-            if (feature.direction == Direction.BEFORE) {
-                feature.value = feature.token.isSpaceBefore() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
-            } else {
-                feature.value = feature.token.isSpaceAfter() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+        List<WhiteSpaceFormatFeature> features = new ArrayList<>();
+        for (Token token : tokens) {
+            if (token.afterFeature != null && token.afterFeature.equals("FALSE") && token.afterFeature.equals("TRUE")) {
+                WhiteSpaceOption value = token.isSpaceAfter() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+                WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.afterFeature, value, token, Direction.AFTER);
+                features.add(feature);
+            }
+            if (token.beforeFeature != null && token.beforeFeature.equals("FALSE") && token.beforeFeature.equals("TRUE")) {
+                WhiteSpaceOption value = token.isSpaceBefore() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+                WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.beforeFeature, value, token, Direction.BEFORE);
+                features.add(feature);
             }
         }
-        return visitor.features;
+        return features;
     }
 
     private static List<Token> tokenizeSource(char[] sourceArray) {
