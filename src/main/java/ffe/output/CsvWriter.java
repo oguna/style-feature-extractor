@@ -3,10 +3,10 @@ package ffe.output;
 import ffe.whitespace.WhiteSpaceFormatFeature;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 
 public class CsvWriter implements IFeatureWriter {
+    private final static int prefixSize = "org.eclipse.jdt.core.formatter.".length();
     private final Writer writer;
     public CsvWriter(Writer writer) {
         this.writer = writer;
@@ -19,6 +19,6 @@ public class CsvWriter implements IFeatureWriter {
     }
 
     private static String format(WhiteSpaceFormatFeature feature, String name) {
-        return name + ", " + feature.token.originalStart + ", " + feature.token.originalEnd + ", " + feature.format + ", " + feature.value;
+        return name + ", " + feature.token.originalStart + ", " + feature.token.originalEnd + ", " + feature.format.substring(prefixSize) + ", " + feature.value;
     }
 }

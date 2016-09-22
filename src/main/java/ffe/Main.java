@@ -2,6 +2,7 @@ package ffe;
 
 import ffe.output.CsvWriter;
 import ffe.output.IFeatureWriter;
+import ffe.output.TextWriter;
 import ffe.whitespace.WhiteSpaceFormatFeature;
 import org.apache.commons.cli.*;
 
@@ -31,7 +32,8 @@ public class Main {
             return;
         }
         Writer writer = outputFile != null ? new FileWriter(outputFile) : new OutputStreamWriter(System.out);
-        IFeatureWriter featureWriter = new CsvWriter(writer);
+        BufferedWriter bufferedWriter = new BufferedWriter(writer);
+        IFeatureWriter featureWriter = new TextWriter(bufferedWriter, "org.eclipse.jdt.core.formatter.insert_space_after_opening_brace_in_array_initializer");
         targets.stream()
                 .map(e -> Paths.get(e))
                 .flatMap(e -> {
@@ -54,6 +56,7 @@ public class Main {
                         throw new UncheckedIOException(exp);
                     }
                 });
+        bufferedWriter.flush();
         if (writer.getClass() == FileWriter.class) {
             writer.close();
         }
