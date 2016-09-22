@@ -1,33 +1,25 @@
 package ffe.gui;
 
 import ffe.FeatureExtractor;
-import ffe.FeatureWriter;
+import ffe.output.CsvWriter;
+import ffe.output.IFeatureWriter;
 import ffe.token.Token;
-import ffe.token.TokenManager;
-import ffe.whitespace.SpacePreparator;
 import ffe.whitespace.WhiteSpaceFormatFeature;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.parser.Scanner;
-import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameEOF;
-import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameNotAToken;
 
 public class SourceCodeManager {
     private final static String helloWorldContent = "public class HelloWorld {\n" +
@@ -37,6 +29,7 @@ public class SourceCodeManager {
             "}";
 
     private Scanner scanner;
+    private String filename = null;
     public final ObservableList<WhiteSpaceFormatFeature> features;
     public final StringProperty text = new SimpleStringProperty();
 
@@ -80,10 +73,10 @@ public class SourceCodeManager {
     }
 
     public void saveFeatures(File file) throws IOException {
-        try (FileWriter fw = new FileWriter(file);
-             FeatureWriter featureWriter = new FeatureWriter(fw)) {
+        try (FileWriter fw = new FileWriter(file)) {
+            IFeatureWriter featureWriter = new CsvWriter(fw);
             for (WhiteSpaceFormatFeature feature : features) {
-                featureWriter.write(feature);
+                featureWriter.write(feature, filename ,this.text.getValue());
             }
         }
     }
@@ -116,10 +109,12 @@ public class SourceCodeManager {
     }
 
     public void loadContent(File file) throws IOException {
+        this.filename = file.toString();
         String content = new String(Files.readAllBytes(file.toPath()));
         initData(content);
     }
     public void loadContent(String content) {
+        this.filename = null;
         initData(content);
     }
 }
