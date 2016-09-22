@@ -53,12 +53,12 @@ public class FeatureExtractor {
         // collect feature values
         List<WhiteSpaceFormatFeature> features = new ArrayList<>();
         for (Token token : tokens) {
-            if (token.afterFeature != null && token.afterFeature.equals("FALSE") && token.afterFeature.equals("TRUE")) {
+            if (token.afterFeature != null && !token.afterFeature.equals("FALSE") && !token.afterFeature.equals("TRUE")) {
                 WhiteSpaceOption value = token.isSpaceAfter() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
                 WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.afterFeature, value, token, Direction.AFTER);
                 features.add(feature);
             }
-            if (token.beforeFeature != null && token.beforeFeature.equals("FALSE") && token.beforeFeature.equals("TRUE")) {
+            if (token.beforeFeature != null && !token.beforeFeature.equals("FALSE") && !token.beforeFeature.equals("TRUE")) {
                 WhiteSpaceOption value = token.isSpaceBefore() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
                 WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.beforeFeature, value, token, Direction.BEFORE);
                 features.add(feature);

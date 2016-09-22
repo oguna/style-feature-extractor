@@ -231,7 +231,7 @@ public class SpacePreparator extends ASTVisitor {
 
         List<Type> thrownExceptionTypes = node.thrownExceptionTypes();
         if (!thrownExceptionTypes.isEmpty()) {
-            this.tm.firstTokenBefore(thrownExceptionTypes.get(0), TokenNamethrows).spaceBefore();
+            this.tm.firstTokenBefore(thrownExceptionTypes.get(0), TokenNamethrows).spaceBefore(TRUE);
 
             beforeComma = node.isConstructor()
                     ? DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_CONSTRUCTOR_DECLARATION_THROWS
@@ -300,8 +300,8 @@ public class SpacePreparator extends ASTVisitor {
                     DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ELLIPSIS);
             List<Annotation> varargsAnnotations = node.varargsAnnotations();
             if (!varargsAnnotations.isEmpty()) {
-                this.tm.firstTokenIn(varargsAnnotations.get(0), TokenNameAT).spaceBefore();
-                this.tm.lastTokenIn(varargsAnnotations.get(varargsAnnotations.size() - 1), -1).clearSpaceAfter();
+                this.tm.firstTokenIn(varargsAnnotations.get(0), TokenNameAT).spaceBefore(TRUE);
+                this.tm.lastTokenIn(varargsAnnotations.get(varargsAnnotations.size() - 1), -1).spaceAfter(FALSE);
             }
         } else {
             handleToken(node.getName(), TokenNameIdentifier, TRUE, FALSE);
@@ -399,7 +399,7 @@ public class SpacePreparator extends ASTVisitor {
 
     @Override
     public boolean visit(AssertStatement node) {
-        this.tm.firstTokenIn(node, TokenNameassert).spaceAfter();
+        this.tm.firstTokenIn(node, TokenNameassert).spaceAfter(TRUE);
         if (node.getMessage() != null) {
             handleTokenBefore(node.getMessage(), TokenNameCOLON, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COLON_IN_ASSERT,
                     DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COLON_IN_ASSERT);
@@ -500,7 +500,7 @@ public class SpacePreparator extends ASTVisitor {
                 && ((AnnotationTypeMemberDeclaration) parent).getDefault() == node)
                 || parent instanceof ArrayInitializer;
         if (!skipSpaceAfter)
-            this.tm.lastTokenIn(node, -1).spaceAfter();
+            this.tm.lastTokenIn(node, -1).spaceAfter(TRUE);
     }
 
     @Override
@@ -557,7 +557,7 @@ public class SpacePreparator extends ASTVisitor {
 
         if (thenStatement instanceof Block && this.tm.isGuardClause((Block) thenStatement)) {
             handleToken(thenStatement, TokenNameLBRACE, FALSE, TRUE);
-            this.tm.lastTokenIn(node, TokenNameRBRACE).spaceBefore();
+            this.tm.lastTokenIn(node, TokenNameRBRACE).spaceBefore(TRUE);
         }
 
         handleSemicolon(thenStatement);
@@ -596,7 +596,7 @@ public class SpacePreparator extends ASTVisitor {
             handleCommas(node.fragments(), DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_MULTIPLE_LOCAL_DECLARATIONS,
                     DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_MULTIPLE_LOCAL_DECLARATIONS);
         }
-        this.tm.firstTokenAfter(node.getType(), -1).spaceBefore();
+        this.tm.firstTokenAfter(node.getType(), -1).spaceBefore(TRUE);
         return true;
     }
 
@@ -1039,7 +1039,7 @@ public class SpacePreparator extends ASTVisitor {
                 char c = SpacePreparator.this.tm.charAt(token.originalStart);
                 boolean isJIDP = ScannerHelper.isJavaIdentifierPart(c);
                 if ((isJIDP || c == '@') && this.isPreviousJIDP)
-                    getPrevious().spaceAfter();
+                    getPrevious().spaceAfter(TRUE);
                 this.isPreviousJIDP = isJIDP;
 
                 switch (token.tokenType) {
