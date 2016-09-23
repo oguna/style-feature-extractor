@@ -99,7 +99,7 @@ public class FeatureExtractor {
             } else if (!a.afterFeature.equals("false") && !a.afterFeature.equals("true") &&
                     !b.beforeFeature.equals("false") && !b.beforeFeature.equals("true")) {
                 // どちらも特徴を持つなら、結合した特徴を定義する
-                String featureName = a.afterFeature + b.beforeFeature.substring(31);
+                String featureName = a.afterFeature + " | " + b.beforeFeature.substring(31);
                 features.add(new WhiteSpaceFormatFeature(featureName, WhiteSpaceOption.INSERT, a, Direction.AFTER));
             } else if (!a.afterFeature.equals("false") && !a.afterFeature.equals("true") && b.beforeFeature.equals("false")) {
                 features.add(new WhiteSpaceFormatFeature(a.afterFeature, WhiteSpaceOption.INSERT, a, Direction.AFTER));
