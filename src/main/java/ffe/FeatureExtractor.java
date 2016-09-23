@@ -33,6 +33,7 @@ public class FeatureExtractor {
         visitor.finishUp();
         // detect space
         for (Token token : tokens) {
+            // トークンの前後に空白が存在するか確認
             token.clearSpaceBefore();
             token.clearSpaceAfter();
             if (token.originalStart == 0) {
@@ -49,6 +50,8 @@ public class FeatureExtractor {
                     token.spaceAfter();
                 }
             }
+            // トークンの前後に別のトークンが存在するか確認
+            resolveLineBreak(token, content);
         }
         // collect feature values
         List<WhiteSpaceFormatFeature> features = new ArrayList<>();
@@ -78,7 +81,35 @@ public class FeatureExtractor {
             }*/
 
         }
+        // 検出した特徴の中に改行を空白としているものがあれば削除
+        for (int i = 0; i < features.size(); i++) {
+            WhiteSpaceFormatFeature feature = features.get(i);
+            if (feature.direction == Direction.BEFORE && feature.token.getLineBreaksBefore() == 1) {
+                features.remove(i);
+                i--;
+            } else if (feature.direction == Direction.AFTER && feature.token.getLineBreaksAfter() == 1) {
+                features.remove(i);
+                i--;
+            }
+        }
         return features;
+    }
+
+    private static void resolveLineBreak(Token token, String content) {
+        int start = token.originalStart - 1;
+        while (start > 0 && Character.isWhitespace(content.charAt(start)) && content.charAt(start) != '\n' && content.charAt(start) != '\r') {
+            start--;
+        }
+        if (start < 0 || content.charAt(start) == '\n' || content.charAt(start) == '\r') {
+            token.putLineBreaksBefore(1);
+        }
+        int end = token.originalEnd + 1;
+        while ( end < content.length() - 1 && Character.isWhitespace(content.charAt(end)) && content.charAt(end) != '\n' && content.charAt(end) != '\r') {
+            end++;
+        }
+        if (end > content.length() - 1 || content.charAt(end) == '\n' || content.charAt(end) == '\r') {
+            token.putLineBreaksAfter(1);
+        }
     }
 
     private static void resolveContinuousTokens(Token a, Token b, List<WhiteSpaceFormatFeature> features) {
