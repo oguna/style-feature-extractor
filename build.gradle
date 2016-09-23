@@ -1,6 +1,7 @@
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'application'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -8,6 +9,8 @@ targetCompatibility = 1.8
 repositories {
     mavenCentral()
 }
+
+mainClassName = "ffe.Main"
 
 dependencies {
     compile 'commons-cli:commons-cli:1.3.1'

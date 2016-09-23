@@ -1,5 +1,6 @@
 package ffe;
 
+import ffe.gui.MainGUI;
 import ffe.output.CsvWriter;
 import ffe.output.IFeatureWriter;
 import ffe.output.TextWriter;
@@ -15,8 +16,10 @@ public class Main {
     public static void main(String[] args) throws IOException {
         Options options = new Options();
         options.addOption("o", "output", true, "output filename");
-        options.addOption("s", "style", true, "output style (text/csv; csv is by default)");
+        options.addOption("s", "style", true, "output style (text/csv; csv by default)");
         options.addOption("f", "format", true, "formats to output (delimiter is comma; all formats by default)");
+        options.addOption("g", "gui", false, "show window (other arguments are ignored)");
+        options.addOption("h", "help", false, "show help");
         final File outputFile;
         final List<String> targets;
         final String[] targetFeatures;
@@ -24,6 +27,15 @@ public class Main {
         try {
             CommandLineParser parser = new DefaultParser();
             CommandLine line = parser.parse(options, args);
+            if (line.hasOption("h")) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("format-feature-extractor [OPTION]... [FILE]...", options);
+                return;
+            }
+            if (line.hasOption("g")) {
+                MainGUI.main(args);
+                return;
+            }
             if (line.hasOption("o")) {
                 outputFile = new File(line.getOptionValue("o"));
             } else {

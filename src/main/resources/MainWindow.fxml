@@ -30,7 +30,7 @@
     </center>
     <bottom>
         <ToolBar>
-            <Label text="Status Bar" />
+            <Label fx:id="statusBar" />
         </ToolBar>
     </bottom>
 </BorderPane>

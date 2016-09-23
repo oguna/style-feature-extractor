@@ -60,7 +60,8 @@ public class FontDialog extends Dialog<Font> {
 
         setResultConverter((dialogButton) -> {
             ButtonBar.ButtonData data = dialogButton == null ? null : dialogButton.getButtonData();
-            return data == ButtonBar.ButtonData.OK_DONE ? Font.font(fontFamilyComboBox.getSelectionModel().getSelectedItem(), fontSizeComboBox.getSelectionModel().getSelectedItem()) : null;
+            return data == ButtonBar.ButtonData.OK_DONE && !fontFamilyComboBox.getSelectionModel().isEmpty() && !fontSizeComboBox.getSelectionModel().isEmpty() ?
+                    Font.font(fontFamilyComboBox.getSelectionModel().getSelectedItem(), fontSizeComboBox.getSelectionModel().getSelectedItem()) : null;
         });
     }
 

@@ -9,10 +9,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Font;
@@ -29,7 +26,9 @@ import java.util.concurrent.Executors;
 public class MainWindowController implements Initializable {
 
     private final SourceCodeManager manager = new SourceCodeManager();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    @FXML
+    private Label statusBar;
 
     @FXML
     private TableColumn<WhiteSpaceFormatFeature, String> positionColumn;
@@ -51,7 +50,7 @@ public class MainWindowController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        attributeColumn.setCellValueFactory(e -> new SimpleStringProperty(e.getValue().format.substring(31)));
+        attributeColumn.setCellValueFactory(e -> new SimpleStringProperty(e.getValue().format));
         positionColumn.setCellValueFactory(e -> new SimpleStringProperty(manager.getPositionDescription(e.getValue().token.originalStart)));
         tokenColumn.setCellValueFactory(e -> new SimpleStringProperty(manager.getToken(e.getValue().token)));
         valueColumn.setCellValueFactory(e -> new SimpleStringProperty(e.getValue().value.toString()));
@@ -63,6 +62,7 @@ public class MainWindowController implements Initializable {
             }
         });
         tableView.setItems(manager.features);
+        statusBar.textProperty().bind(Bindings.concat("Number of Features: ").concat(Bindings.size(manager.features)));
         manager.text.addListener((observable, oldValue, newValue) -> {
             textArea.getContent().clear();
             textArea.getContent().replaceText(0, 0, newValue);
