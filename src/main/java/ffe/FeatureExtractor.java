@@ -104,7 +104,7 @@ public class FeatureExtractor {
             token.putLineBreaksBefore(1);
         }
         int end = token.originalEnd + 1;
-        while ( end < content.length() - 1 && Character.isWhitespace(content.charAt(end)) && content.charAt(end) != '\n' && content.charAt(end) != '\r') {
+        while (end < content.length() - 1 && Character.isWhitespace(content.charAt(end)) && content.charAt(end) != '\n' && content.charAt(end) != '\r') {
             end++;
         }
         if (end > content.length() - 1 || content.charAt(end) == '\n' || content.charAt(end) == '\r') {
@@ -132,10 +132,10 @@ public class FeatureExtractor {
                 // どちらも特徴を持つなら、結合した特徴を定義する
                 String featureName = a.afterFeature + " | " + b.beforeFeature.substring(31);
                 features.add(new WhiteSpaceFormatFeature(featureName, WhiteSpaceOption.INSERT, a, Direction.AFTER));
-            } else if (!a.afterFeature.equals("false") && !a.afterFeature.equals("true") && b.beforeFeature.equals("false")) {
+            } else if (!a.afterFeature.equals("false") && !a.afterFeature.equals("true") && b.afterFeature.equals("false")) {
                 features.add(new WhiteSpaceFormatFeature(a.afterFeature, WhiteSpaceOption.INSERT, a, Direction.AFTER));
             } else if (!b.beforeFeature.equals("false") && !b.beforeFeature.equals("true") && a.afterFeature.equals("false")) {
-                features.add(new WhiteSpaceFormatFeature(b.beforeFeature, WhiteSpaceOption.INSERT, a, Direction.BEFORE));
+                features.add(new WhiteSpaceFormatFeature(b.beforeFeature, WhiteSpaceOption.INSERT, b, Direction.BEFORE));
             }
         }
     }
