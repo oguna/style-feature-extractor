@@ -52,19 +52,61 @@ public class FeatureExtractor {
         }
         // collect feature values
         List<WhiteSpaceFormatFeature> features = new ArrayList<>();
-        for (Token token : tokens) {
-            if (token.afterFeature != null && !token.afterFeature.equals("FALSE") && !token.afterFeature.equals("TRUE")) {
+        for (int i = 0; i < tokens.size() - 1; i++) {
+            Token a = tokens.get(i);
+            Token b = tokens.get(i + 1);
+            resolveContinuousTokens(a, b, features);
+            /*if (token.beforeFeature != null && !token.beforeFeature.equals("false") && !token.beforeFeature.equals("true")) {
+                WhiteSpaceOption value = token.isSpaceBefore() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
+                WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.beforeFeature, value, token, Direction.BEFORE);
+                if (i < tokens.size() - 1 && token.isSpaceBefore()
+                        && tokens.get(i+1).beforeFeature != null
+                        && !tokens.get(i+1).beforeFeature.equals("false")
+                        && !tokens.get(i+1).beforeFeature.equals("true")
+                        && tokens.get(i+1).isSpaceBefore()) {
+                    // この直後のトークンも考慮した特徴を生成する
+                    String name = token.afterFeature + " | " + tokens.get(i + 1).beforeFeature.substring(31);
+                    feature = new WhiteSpaceFormatFeature(name, WhiteSpaceOption.INSERT, token, Direction.AFTER);
+                    tokens.get(i + 1).spaceBefore("false");
+                }
+                features.add(feature);
+            }
+            if (token.afterFeature != null && !token.afterFeature.equals("false") && !token.afterFeature.equals("true")) {
                 WhiteSpaceOption value = token.isSpaceAfter() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
                 WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.afterFeature, value, token, Direction.AFTER);
                 features.add(feature);
-            }
-            if (token.beforeFeature != null && !token.beforeFeature.equals("FALSE") && !token.beforeFeature.equals("TRUE")) {
-                WhiteSpaceOption value = token.isSpaceBefore() ? WhiteSpaceOption.INSERT : WhiteSpaceOption.DO_NOT_INSERT;
-                WhiteSpaceFormatFeature feature = new WhiteSpaceFormatFeature(token.beforeFeature, value, token, Direction.BEFORE);
-                features.add(feature);
-            }
+            }*/
+
         }
         return features;
+    }
+
+    private static void resolveContinuousTokens(Token a, Token b, List<WhiteSpaceFormatFeature> features) {
+        assert a.originalStart < b.originalStart;
+        if (!a.isSpaceAfter() && !b.isSpaceBefore()) {
+            // トークン間に空白が存在しない場合
+            if (!a.afterFeature.equals("true") && !a.afterFeature.equals("false")) {
+                features.add(new WhiteSpaceFormatFeature(a.afterFeature, WhiteSpaceOption.DO_NOT_INSERT, a, Direction.AFTER));
+            }
+            if (!b.beforeFeature.equals("true") && !b.beforeFeature.equals("false")) {
+                features.add(new WhiteSpaceFormatFeature(b.beforeFeature, WhiteSpaceOption.DO_NOT_INSERT, b, Direction.BEFORE));
+            }
+        } else {
+            // トークン間に空白が存在する場合
+            if (a.afterFeature.equals("true") || b.beforeFeature.equals("true")) {
+                // どちらかがtrueなら必ず空白が挿入されるので
+                // フォーマットの特徴として扱わない
+            } else if (!a.afterFeature.equals("false") && !a.afterFeature.equals("true") &&
+                    !b.beforeFeature.equals("false") && !b.beforeFeature.equals("true")) {
+                // どちらも特徴を持つなら、結合した特徴を定義する
+                String featureName = a.afterFeature + b.beforeFeature.substring(31);
+                features.add(new WhiteSpaceFormatFeature(featureName, WhiteSpaceOption.INSERT, a, Direction.AFTER));
+            } else if (!a.afterFeature.equals("false") && !a.afterFeature.equals("true") && b.beforeFeature.equals("false")) {
+                features.add(new WhiteSpaceFormatFeature(a.afterFeature, WhiteSpaceOption.INSERT, a, Direction.AFTER));
+            } else if (!b.beforeFeature.equals("false") && !b.beforeFeature.equals("true") && a.afterFeature.equals("false")) {
+                features.add(new WhiteSpaceFormatFeature(b.beforeFeature, WhiteSpaceOption.INSERT, a, Direction.BEFORE));
+            }
+        }
     }
 
     private static List<Token> tokenizeSource(char[] sourceArray) {
