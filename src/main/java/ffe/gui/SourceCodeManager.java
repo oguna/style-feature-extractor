@@ -74,7 +74,7 @@ public class SourceCodeManager {
 
     public void saveFeatures(File file) throws IOException {
         try (FileWriter fw = new FileWriter(file)) {
-            IFeatureWriter featureWriter = new CsvWriter(fw);
+            IFeatureWriter featureWriter = new CsvWriter(fw, null);
             for (WhiteSpaceFormatFeature feature : features) {
                 featureWriter.write(feature, filename ,this.text.getValue());
             }

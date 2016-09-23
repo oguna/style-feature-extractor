@@ -4,25 +4,29 @@ import ffe.whitespace.WhiteSpaceFormatFeature;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Objects;
+import java.util.*;
 
 public class TextWriter implements IFeatureWriter {
-    private final static int prefixSize = "org.eclipse.jdt.core.formatter.".length();
     private final Writer writer;
-    private final String targetFeature;
-    public TextWriter(Writer writer, String targetFeature) {
+    private final Set<String> targetFeatures;
+    public TextWriter(Writer writer, String[] targetFeatures) {
         this.writer = writer;
-        this.targetFeature = targetFeature;
+        if (targetFeatures == null || targetFeatures.length == 0) {
+            this.targetFeatures = null;
+        } else {
+            this.targetFeatures = new HashSet<>();
+            Arrays.stream(targetFeatures).forEach(this.targetFeatures::add);
+        }
     }
 
     @Override
     public void write(WhiteSpaceFormatFeature feature, String name, String content) throws IOException {
-        if (Objects.equals(feature.format, targetFeature)) {
+        if (targetFeatures == null || targetFeatures.contains(feature.format)) {
             int lineNumber = getLineNumber(content, feature.token.originalStart);
             String line = getLine(content, feature.token.originalStart);
             writer.write(name + " : " + lineNumber);
             writer.write("\n");
-            writer.write(feature.format.substring(prefixSize) + " = " + feature.value);
+            writer.write(feature.format + " = " + feature.value);
             writer.write("\n");
             writer.write(line);
             writer.write("\n");

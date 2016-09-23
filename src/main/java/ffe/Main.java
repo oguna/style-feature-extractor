@@ -15,9 +15,12 @@ public class Main {
     public static void main(String[] args) throws IOException {
         Options options = new Options();
         options.addOption("o", "output", true, "output filename");
-        options.addOption("f", "format", true, "output style (text/txt/csv/html)");
-        File outputFile;
-        List<String> targets;
+        options.addOption("s", "style", true, "output style (text/csv; csv is by default)");
+        options.addOption("f", "format", true, "formats to output (delimiter is comma; all formats by default)");
+        final File outputFile;
+        final List<String> targets;
+        final String[] targetFeatures;
+        final String style;
         try {
             CommandLineParser parser = new DefaultParser();
             CommandLine line = parser.parse(options, args);
@@ -27,13 +30,26 @@ public class Main {
                 outputFile = null;
             }
             targets = line.getArgList();
+            if (line.hasOption("f")) {
+                targetFeatures = line.getOptionValue("f").split(",");
+            } else {
+                targetFeatures = null;
+            }
+            if (line.hasOption("s")) {
+                style = line.getOptionValue("s");
+                if (!style.equals("csv") && !style.equals("text")) {
+                    throw new ParseException("argument of `s' needs csv or text");
+                }
+            } else {
+                style = "csv";
+            }
         } catch (ParseException exp) {
             System.out.println("Unexpected exception:" + exp.getMessage());
             return;
         }
         Writer writer = outputFile != null ? new FileWriter(outputFile) : new OutputStreamWriter(System.out);
         BufferedWriter bufferedWriter = new BufferedWriter(writer);
-        IFeatureWriter featureWriter = new TextWriter(bufferedWriter, "org.eclipse.jdt.core.formatter.insert_space_after_opening_brace_in_array_initializer");
+        IFeatureWriter featureWriter = style.equals("csv") ? new CsvWriter(bufferedWriter, targetFeatures) : new TextWriter(bufferedWriter, targetFeatures);
         targets.stream()
                 .map(e -> Paths.get(e))
                 .flatMap(e -> {

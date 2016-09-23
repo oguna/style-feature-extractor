@@ -8,7 +8,12 @@ public class WhiteSpaceFormatFeature {
     public final Token token;
     public final Direction direction;
 
+    private final static String prefixToRemove = "org.eclipse.jdt.core.formatter.";
+
     public WhiteSpaceFormatFeature(String format, WhiteSpaceOption value, Token token, Direction direction) {
+        if (format.startsWith(prefixToRemove)) {
+            format = format.substring(prefixToRemove.length());
+        }
         this.format = format;
         this.value = value;
         this.token = token;
